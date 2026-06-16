@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.2 - 2026-06-16
+
+- Added `scripts/bootstrap_runtime.py` for isolated user-writable dependency setup.
+- Added runtime dependency groups for core analysis, Nanonis IO, IBW export, AI atom detection, and UI-wrapped helpers.
+- Updated the README with bootstrap usage, offline wheelhouse mode, and safety boundaries.
+- Updated runtime guidance to forbid root/global installs and to prefer per-skill virtual environments.
+
 ## v0.1.1 - 2026-06-16
 
 - Added a default runtime bootstrap and dependency probe for PySIDAM, `nanonispy`, IBW export, Qt-wrapped modules, and AI atom detection.

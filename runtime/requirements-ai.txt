@@ -1,0 +1,1 @@
+AI4STM @ git+https://github.com/Wangq1h/AI4STM.git@v0.1.0

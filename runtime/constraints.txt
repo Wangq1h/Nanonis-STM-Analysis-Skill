@@ -1,0 +1,5 @@
+# Constraints for the STM/SJTM skill runtime.
+#
+# Keep this file intentionally light until a dependency combination is verified
+# across target platforms. Add pins here for known-bad upstream releases or for
+# a release wheelhouse, rather than pinning every package in requirements files.

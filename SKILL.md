@@ -19,7 +19,7 @@ Before acting, classify the user request:
 6. Cross-observable comparison.
 7. Reporting and evidence packaging.
 
-Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
+Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. Run `scripts/probe_runtime.py` first when local execution is available; if required dependencies are missing, use `scripts/bootstrap_runtime.py` to create an isolated user runtime before file IO or fitting. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
 
 ## Reference Routing
 
@@ -45,4 +45,5 @@ Read only the relevant references for the current task after the required first 
 - For lock-in or QPI phase claims, save or request complex fields, amplitudes, phases, masks, and threshold sweeps.
 - For fitting claims, report fit status, residuals, boundary hits, parameter bounds, and failure modes.
 - Treat `pysidam` as a preferred tool source, not a mandatory dependency.
+- Use only isolated user-writable Python runtimes for missing dependencies; do not use `sudo`, root installs, global `pip`, `brew`, or conda base modifications.
 - Do not introduce dataset-specific paths or private experimental data into reusable skill files.
