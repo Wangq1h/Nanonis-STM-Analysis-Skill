@@ -19,11 +19,14 @@ Before acting, classify the user request:
 6. Cross-observable comparison.
 7. Reporting and evidence packaging.
 
-Always read `references/data-contracts.md` and `references/quality-checks.md` before processing data or proposing scientific conclusions.
+Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
 
 ## Reference Routing
 
 - For overall workflow, read `references/workflow.md`.
+- For runtime dependency checks, local `pysidam` discovery, and default imports, read `references/runtime-bootstrap.md`.
+- For supported file formats, reader entry points, object contracts, and unsupported formats, read `references/format-io-matrix.md`.
+- For raw Nanonis `.3ds`, `.sxm`, `.dat`, topography extraction, bias divider handling, or target-energy slices, read `references/nanonis-3ds-ingest.md`.
 - For spectroscopy fitting, superconducting gap fitting, multipeak fitting, gap maps, Z-ratio, or bias calibration, read `references/fitting-recipes.md`.
 - For `pysidam` module selection, read `references/pysidam-tool-map.md`.
 - For quality gates and verification requirements, read `references/quality-checks.md`.
@@ -34,8 +37,10 @@ Read only the relevant references for the current task after the required first 
 ## Mandatory Rules
 
 - Confirm array shape, axis order, bias unit, coordinate frame, and scan size before quantitative analysis.
-- Keep 2D maps as `(y, x)` and spectroscopy cubes as `(y, x, bias)` unless a specific algorithm requires an explicit transpose to `(bias, y, x)`.
+- Keep report-facing 2D maps as `(y, x)` and report-facing spectroscopy cubes as `(y, x, bias)`. When calling PySIDAM core, respect its internal 3DS order `(x, y, bias)` and record any explicit transpose.
 - Record all unit conversions, bias dividers, background corrections, smoothing, interpolation, window functions, q selections, and masks.
+- For raw Nanonis `.3ds`, `.sxm`, or `.dat`, use `nanonispy` through `pysidam.core.nanonis_io` when available. Do not hand-roll a binary parser unless all documented readers are unavailable and the user explicitly approves that fallback.
+- Prefer PySIDAM headless/core functions. Do not instantiate Qt windows or `QApplication` for data analysis unless the user explicitly asks for the GUI.
 - Do not make phase conclusions from real-IFFT images alone.
 - For lock-in or QPI phase claims, save or request complex fields, amplitudes, phases, masks, and threshold sweeps.
 - For fitting claims, report fit status, residuals, boundary hits, parameter bounds, and failure modes.

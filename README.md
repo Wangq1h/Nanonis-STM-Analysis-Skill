@@ -17,11 +17,12 @@ The package is documentation-first. It does not contain private experimental dat
 
 For any STM/SJTM task, an agent should:
 
-1. Read `references/data-contracts.md`.
-2. Classify the task using `references/workflow.md`.
-3. Read `references/quality-checks.md`.
-4. Read task-specific files such as `references/fitting-recipes.md`, `references/pysidam-tool-map.md`, or `references/reporting.md`.
-5. Produce outputs that include inputs, data contracts, parameters, quality metrics, warnings, and reproducibility notes.
+1. Run `python3 scripts/probe_runtime.py` or perform the same import checks.
+2. Read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
+3. Classify the task using `references/workflow.md`.
+4. For file IO, read `references/format-io-matrix.md`; for raw Nanonis files, also read `references/nanonis-3ds-ingest.md`.
+5. Read task-specific files such as `references/fitting-recipes.md`, `references/pysidam-tool-map.md`, or `references/reporting.md`.
+6. Produce outputs that include inputs, data contracts, parameters, quality metrics, warnings, and reproducibility notes.
 
 ## Codex Installation
 
@@ -44,7 +45,9 @@ Agents that do not support Codex skills can read this repository directly:
 
 ## pysidam Relationship
 
-`pysidam` is treated as a preferred implementation source, not a hard dependency. When it is available, agents can use `references/pysidam-tool-map.md` to select modules and functions. When it is unavailable, agents should still follow the platform-neutral workflow and quality gates.
+`pysidam` is treated as the preferred implementation source. When it is available, agents should use `references/pysidam-tool-map.md` to select headless modules and functions. Raw Nanonis `.3ds`, `.sxm`, and `.dat` require `nanonispy` through the normal PySIDAM route; missing `nanonispy` should be reported as a dependency gap, not worked around with an unverified binary parser. PXP is not claimed as supported by the current PySIDAM-backed skill.
+
+The default PySIDAM dependency set is documented in `references/runtime-bootstrap.md`. The probe distinguishes "package can be found" from "module can actually be imported", which matters for Qt-wrapped modules.
 
 ## Validation
 

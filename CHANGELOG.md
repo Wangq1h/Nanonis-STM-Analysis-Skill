@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.1 - 2026-06-16
+
+- Added a default runtime bootstrap and dependency probe for PySIDAM, `nanonispy`, IBW export, Qt-wrapped modules, and AI atom detection.
+- Added a file-format IO matrix for `.3ds`, `.sxm`, `.dat`, `.ibw`, `.npz`, and text-table inputs.
+- Added a raw Nanonis/3DS ingest recipe using `pysidam.core.nanonis_io` and `pysidam.core.dataset_utils.prepare_3ds_dataset`.
+- Updated the PySIDAM map to the package layout at `origin/main` commit `f42e433a909e4347773ac2a45067c6f112cd5709`.
+- Clarified that PXP is not a current PySIDAM-backed supported format.
+- Documented PySIDAM's internal `(x, y, bias)` 3DS contract and explicit conversion to report-facing `(y, x, bias)`.
+- Expanded fitting recipes with concrete headless PySIDAM APIs for Dynes/NIS/SIS, deconvolution, gap maps, multipeak fitting, and intensity derivatives.
+
 ## v0.1.0 - 2026-06-16
 
 Initial preview release.

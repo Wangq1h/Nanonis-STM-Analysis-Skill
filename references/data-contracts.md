@@ -8,6 +8,7 @@ Use this reference before quantitative STM/SJTM analysis. Do not infer axis orde
 - Spectroscopy cube: `(y, x, bias)`.
 - Fit cube view: `(bias, y, x)`, created only by an explicit transpose when a fitting function expects spectra as the first axis.
 - Linecut stack: document whether it is `(position, bias)` or `(bias, position)`.
+- PySIDAM core 3DS cube: `(x, y, bias)`. When using `pysidam.core.dataset_utils.prepare_3ds_dataset`, preserve this internal order until a downstream report or plotting step explicitly needs row-major `(y, x, bias)`.
 
 ## Bias Axis
 
@@ -59,6 +60,7 @@ Every report should include:
 data_contract:
   map_shape_yx
   cube_shape_yxbias
+  pysidam_internal_shape_xybias
   bias_unit
   bias_axis_source
   coordinate_frame

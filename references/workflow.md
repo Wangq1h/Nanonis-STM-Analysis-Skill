@@ -4,7 +4,9 @@ This reference gives the default analysis sequence for STM, STS, SJTM, QPI, and 
 
 ## 1. Ingest
 
-Identify the source format and available channels before analysis. Common inputs include `.sxm`, `.3ds`, `.dat`, `.pxp`, `.ibw`, CSV, TXT, NPZ, NPY, HDF5, and exported image files.
+Identify the source format and available channels before analysis. Current PySIDAM-backed inputs include `.sxm`, `.3ds`, `.dat`, `.npz`, `.ibw`, CSV, TSV, and TXT. Other formats need a documented converter before they are treated as supported.
+
+Run the runtime bootstrap from `references/runtime-bootstrap.md` before opening data, then use the reader map in `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, use the `nanonispy` route described in `references/nanonis-3ds-ingest.md`.
 
 Record:
 
@@ -15,7 +17,7 @@ Record:
 - Scan size and pixel size.
 - Header metadata used for temperature, sweep direction, units, or tip state.
 
-If a native reader is unavailable, request exported intermediate data in CSV, NPZ, HDF5, or text form.
+If `nanonispy` is unavailable, raw Nanonis IO is blocked through the normal path. Request installation or exported intermediate data in CSV, NPZ, HDF5, IBW, or text form rather than inventing a parser.
 
 ## 2. Normalize Data Contracts
 

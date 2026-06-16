@@ -75,10 +75,13 @@ Outputs:
 
 pysidam mapping:
 
-- `spectroscopy_dynes_fitting.py` for Dynes-style interactive fitting.
-- `superconducting_gap_models.py` for reusable gap model helpers.
-- `usefultools_deconvolution_point.py` for NIS/SIS point-spectrum fitting and deconvolution.
-- `usefultools_deconvolution_grid.py` for grid-based deconvolution workflows.
+- `pysidam.core.superconducting_gap_models.evaluate_gap_dos_model` for model evaluation and parameter defaults.
+- `pysidam.useful_tools.usefultools_deconvolution_point.fit_nis_dynes_didv` and `fit_sis_dynes_didv` for fixed-temperature Dynes-style dI/dV fitting.
+- `pysidam.useful_tools.usefultools_deconvolution_point.fit_selected_gap_dos_model_guarded` for guarded superconducting DOS fitting with fit-status metadata.
+- `pysidam.useful_tools.usefultools_deconvolution_point.run_sis_didv_deconvolution` for SIS deconvolution when tip DOS, sample DOS assumptions, temperature, and normalization are known.
+- `pysidam.useful_tools.usefultools_deconvolution_grid` for grid-based resampling, pseudo-inverse deconvolution, and R2/statistics helpers.
+
+If a fitting helper lives in a GUI-heavy module and Qt import fails, report the blocked import and use the pure core model or documented algorithm contract rather than silently changing the model.
 
 ## Multipeak Fitting
 
@@ -119,8 +122,10 @@ Outputs:
 
 pysidam mapping:
 
-- `linecutmap_gap_map_extraction.py` and `PeakFitter` for Gaussian peak extraction and gap maps.
-- `linecutmap_multipeak_fitting.py` for universal multipeak fitting and linecut workflows.
+- `pysidam.linecutmap.linecutmap_gap_map_extraction.PeakFitter.fit_single_pixel` for Gaussian peak extraction inside left/right search windows.
+- Gap map contract: fit the left and right peak per pixel and compute `(right_peak - left_peak) / 2`; save left, right, gap, status, and NaN/failure-fraction maps.
+- `pysidam.linecutmap.linecutmap_multipeak_fitting.UniversalVortexFitterEngine` for robust multipeak linecut/map fitting.
+- Use `run_fit`, then save `fit_results`, `quality`, `extracted_peaks`, and `collect_debug_state_payload` for auditability.
 
 ## Peak Height, Z-Ratio, And Bias Calibration
 
@@ -158,3 +163,9 @@ Outputs:
 - Peak-height or ratio maps.
 - Per-pixel status maps.
 - Report entry with target energies and interpolation method.
+
+pysidam mapping:
+
+- `pysidam.linecutmap.linecutmap_intensity` implements intensity modes `dI/dV`, `d2`, and `neg_d3`.
+- Use `d2` for the numerical first derivative of dI/dV, and `neg_d3` for the negative second derivative of dI/dV.
+- Record derivative order, smoothing, interpolation, baseline removal, integration windows, and denominator floors.
