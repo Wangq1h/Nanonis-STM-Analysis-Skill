@@ -30,6 +30,9 @@ GROUP_ALIASES = {
 }
 CONSTRAINTS_FILE = RUNTIME_DIR / "constraints.txt"
 DEFAULT_CACHE_DIR = Path(os.environ.get("STM_SJTM_SKILL_CACHE", "~/.cache/stm-sjtm-data-processing")).expanduser()
+HOST_CONFIG = Path(
+    os.environ.get("STM_SJTM_SKILL_HOST_CONFIG", "~/.config/stm-sjtm-data-processing/host.json")
+).expanduser()
 RUNTIME_JSON = "runtime.json"
 
 
@@ -77,6 +80,28 @@ def assert_safe_path(path: Path) -> Path:
     if not (is_relative_to(resolved, home) or is_relative_to(resolved, skill_root)):
         die(f"Runtime path must be user-writable and under the home directory or skill root: {resolved}")
     return resolved
+
+
+def load_host_config(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.expanduser().read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:
+        die(f"Could not read host config {path}: {type(exc).__name__}: {exc}")
+    if not isinstance(data, dict):
+        die(f"Host config must be a JSON object: {path}")
+    return data
+
+
+def normalize_roots(value: Any) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    die("Host config pysidam_root/pysidam_roots must be a string or list.")
 
 
 def parse_groups(raw: str) -> list[str]:
@@ -315,16 +340,26 @@ def write_runtime_json(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create an isolated STM/SJTM skill Python runtime.")
-    parser.add_argument("--groups", default=",".join(DEFAULT_GROUPS), help="Comma-separated groups: core,nanonis,ibw,ai,ui,headless,all.")
-    parser.add_argument("--python", default=sys.executable, help="Base Python used to create the venv.")
-    parser.add_argument("--cache-dir", default=str(DEFAULT_CACHE_DIR), help="User-writable cache directory.")
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--host-config", default=str(HOST_CONFIG), help="Host-specific config JSON.")
+    pre_args, _ = pre_parser.parse_known_args()
+    host_config_path = Path(pre_args.host_config).expanduser()
+    host_config = load_host_config(host_config_path)
+    default_roots = normalize_roots(host_config.get("pysidam_root")) + normalize_roots(host_config.get("pysidam_roots"))
+
+    parser = argparse.ArgumentParser(
+        description="Create an isolated STM/SJTM skill Python runtime.",
+        parents=[pre_parser],
+    )
+    parser.add_argument("--groups", default=str(host_config.get("default_groups") or ",".join(DEFAULT_GROUPS)), help="Comma-separated groups: core,nanonis,ibw,ai,ui,headless,all.")
+    parser.add_argument("--python", default=str(host_config.get("base_python") or sys.executable), help="Base Python used to create the venv.")
+    parser.add_argument("--cache-dir", default=str(host_config.get("cache_dir") or DEFAULT_CACHE_DIR), help="User-writable cache directory.")
     parser.add_argument("--venv-path", default="", help="Explicit venv path. Must be user-writable and non-system.")
     parser.add_argument("--wheelhouse", default="", help="Optional local wheelhouse directory.")
     parser.add_argument("--no-network", action="store_true", help="Install only from --wheelhouse and do not clone PySIDAM.")
     parser.add_argument("--dry-run", action="store_true", help="Print the plan without changing files or installing packages.")
     parser.add_argument("--recreate", action="store_true", help="Remove and recreate the managed venv if it already exists.")
-    parser.add_argument("--pysidam-root", action="append", default=[], help="Existing PySIDAM source checkout root.")
+    parser.add_argument("--pysidam-root", action="append", default=default_roots, help="Existing PySIDAM source checkout root.")
     parser.add_argument("--pysidam-mode", choices=["auto", "none"], default="auto", help="Use an existing PySIDAM source or clone one into cache.")
     parser.add_argument("--pysidam-git-url", default="https://github.com/Wangq1h/pysidam.git", help="PySIDAM git URL used by auto mode.")
     parser.add_argument("--pysidam-ref", default="origin/main", help="PySIDAM ref checked out in the managed cache.")

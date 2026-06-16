@@ -17,8 +17,8 @@ The package is documentation-first, with small portable helper scripts for runti
 
 For any STM/SJTM task, an agent should:
 
-1. Run `python3 scripts/probe_runtime.py` or perform the same import checks.
-2. If dependencies are missing and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
+1. Run `python3 scripts/resolve_runtime.py --probe` or perform the same cached-runtime import checks.
+2. If no cached runtime is ready and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
 3. Read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
 4. Classify the task using `references/workflow.md`.
 5. For file IO, read `references/format-io-matrix.md`; for raw Nanonis files, also read `references/nanonis-3ds-ingest.md`.
@@ -67,6 +67,25 @@ python3 scripts/bootstrap_runtime.py --groups headless --pysidam-mode none
 
 The bootstrapper writes `runtime.json` inside the cache with the venv path, dependency groups, PySIDAM source path, and post-install probe results.
 
+For repeated use across project directories, use the resolver:
+
+```bash
+python3 scripts/resolve_runtime.py
+python3 scripts/resolve_runtime.py --probe
+python3 scripts/resolve_runtime.py --print-python
+python3 scripts/resolve_runtime.py --bootstrap-command
+```
+
+The resolver calls `scripts/probe_runtime.py` through the cached runtime Python when a prepared runtime exists.
+
+Host-specific defaults, such as a local PySIDAM source checkout, belong in:
+
+```text
+~/.config/stm-sjtm-data-processing/host.json
+```
+
+The skill repository should stay portable; do not commit host paths.
+
 ## Codex Installation
 
 Copy or synchronize this repository root to:
@@ -110,4 +129,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.1.2`. Release notes live in `RELEASE_NOTES_v0.1.2.md`.
+The current release line is `v0.1.3`. Release notes live in `RELEASE_NOTES_v0.1.3.md`.

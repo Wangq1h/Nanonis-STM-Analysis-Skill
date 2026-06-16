@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.3 - 2026-06-16
+
+- Added `scripts/resolve_runtime.py` so agents reuse a cached runtime across project directories before bootstrapping.
+- Documented host-local configuration through `~/.config/stm-sjtm-data-processing/host.json`.
+- Updated the skill entry point to prefer `resolve_runtime.py --probe` over probing the current `python3` directly.
+
 ## v0.1.2 - 2026-06-16
 
 - Added `scripts/bootstrap_runtime.py` for isolated user-writable dependency setup.

@@ -19,12 +19,12 @@ Before acting, classify the user request:
 6. Cross-observable comparison.
 7. Reporting and evidence packaging.
 
-Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. Run `scripts/probe_runtime.py` first when local execution is available; if required dependencies are missing, use `scripts/bootstrap_runtime.py` to create an isolated user runtime before file IO or fitting. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
+Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. Run `scripts/resolve_runtime.py --probe` first when local execution is available so an existing cached runtime is reused across directories. If no cached runtime is ready, use `scripts/bootstrap_runtime.py` to create an isolated user runtime before file IO or fitting. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
 
 ## Reference Routing
 
 - For overall workflow, read `references/workflow.md`.
-- For runtime dependency checks, local `pysidam` discovery, and default imports, read `references/runtime-bootstrap.md`.
+- For runtime dependency checks, persistent cached runtimes, host-specific `pysidam` discovery, and default imports, read `references/runtime-bootstrap.md`.
 - For supported file formats, reader entry points, object contracts, and unsupported formats, read `references/format-io-matrix.md`.
 - For raw Nanonis `.3ds`, `.sxm`, `.dat`, topography extraction, bias divider handling, or target-energy slices, read `references/nanonis-3ds-ingest.md`.
 - For spectroscopy fitting, superconducting gap fitting, multipeak fitting, gap maps, Z-ratio, or bias calibration, read `references/fitting-recipes.md`.

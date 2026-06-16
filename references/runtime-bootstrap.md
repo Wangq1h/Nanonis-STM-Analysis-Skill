@@ -7,16 +7,38 @@ Use this reference before any data IO, fitting, QPI, SJTM, topography correction
 From the skill repository, run:
 
 ```bash
-python3 scripts/probe_runtime.py
+python3 scripts/resolve_runtime.py --probe
 ```
 
-If `pysidam` is not importable, provide a source checkout explicitly:
+This first checks the persistent cache, especially `runtime.json`, and runs `probe_runtime.py` through the cached virtual environment Python. It should be the default in every project directory.
+
+If no cached runtime is ready, inspect the bootstrap command:
 
 ```bash
-python3 scripts/probe_runtime.py --pysidam-root /path/to/pysidam
+python3 scripts/resolve_runtime.py --bootstrap-command
 ```
 
-For a portable agent that cannot run the script, perform the same checks by actually importing modules, not only by checking package names.
+For a portable agent that cannot run the resolver, perform the same checks by reading the user-writable cache `runtime.json`, using its `python` path, and actually importing modules, not only by checking package names.
+
+## Persistent Host Configuration
+
+The skill is portable and must not hard-code host paths. Host-specific defaults live outside the skill, in:
+
+```text
+~/.config/stm-sjtm-data-processing/host.json
+```
+
+Example schema:
+
+```json
+{
+  "base_python": "/path/to/python3",
+  "pysidam_root": "/path/to/pysidam",
+  "default_groups": "headless"
+}
+```
+
+Agents should treat this file as local machine state. Do not commit it to the skill repository. `resolve_runtime.py` and `bootstrap_runtime.py` use it to avoid rediscovering PySIDAM or rebuilding the runtime for each working directory.
 
 ## Safe Bootstrap
 
@@ -26,7 +48,7 @@ When required dependencies are missing and local execution is allowed, prefer th
 python3 scripts/bootstrap_runtime.py --groups headless
 ```
 
-`headless` expands to `core,nanonis,ibw`. This creates a per-skill virtual environment under a user-writable cache such as `~/.cache/stm-sjtm-data-processing`, installs the selected dependency groups, probes the resulting runtime, and writes `runtime.json` in the cache.
+`headless` expands to `core,nanonis,ibw`. This creates or reuses a per-skill virtual environment under a user-writable cache such as `~/.cache/stm-sjtm-data-processing`, installs the selected dependency groups, probes the resulting runtime, and writes `runtime.json` in the cache. A later task in a different directory should reuse this cache through `resolve_runtime.py --probe`, not bootstrap again.
 
 Safety rules:
 
@@ -36,6 +58,7 @@ Safety rules:
 - Use `--no-network --wheelhouse /path/to/wheelhouse` for offline or locked-down installs.
 - Use `--pysidam-root /path/to/pysidam` to point at an existing source checkout.
 - Use `--pysidam-mode none` when the agent must not clone PySIDAM.
+- Prefer the host `pysidam_root` from `host.json` or `runtime.json`; do not rediscover or clone PySIDAM for every new project directory.
 
 The bootstrapper never mutates existing PySIDAM source checkouts. If PySIDAM is not importable and no source root is provided, auto mode may clone `https://github.com/Wangq1h/pysidam.git` into the skill cache and load it as source.
 
