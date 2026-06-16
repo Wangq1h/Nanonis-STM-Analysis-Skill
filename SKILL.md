@@ -26,6 +26,7 @@ Always read `references/data-contracts.md` and `references/quality-checks.md` be
 - For overall workflow, read `references/workflow.md`.
 - For spectroscopy fitting, superconducting gap fitting, multipeak fitting, gap maps, Z-ratio, or bias calibration, read `references/fitting-recipes.md`.
 - For `pysidam` module selection, read `references/pysidam-tool-map.md`.
+- For quality gates and verification requirements, read `references/quality-checks.md`.
 - For output schemas, provenance, and evidence packages, read `references/reporting.md`.
 
 Read only the relevant references for the current task after the required first step.
