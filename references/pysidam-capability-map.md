@@ -14,6 +14,7 @@ This map is the human-readable companion to the machine-readable capability inde
 
 - Raw Nanonis `.dat`, `.sxm`, `.3ds`: use `scripts/pysidam_agent/read_file.py`.
 - Basic `.dat` overview plots: use `scripts/pysidam_agent/plot_spectrum.py` and the STS quick card.
+- Superconducting gap fitting: use `scripts/pysidam_agent/fit_gap.py` and the gap fit quick card.
 - Capability lookup: use `scripts/pysidam_agent/capabilities.py --json`, or filter with `--domain` and `--status`.
 
 ## Domain Routing

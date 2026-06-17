@@ -17,6 +17,7 @@ REQUIRED_FILES = [
     "RELEASE_NOTES_v0.1.2.md",
     "RELEASE_NOTES_v0.1.3.md",
     "RELEASE_NOTES_v0.1.4.md",
+    "RELEASE_NOTES_v0.1.5.md",
     "scripts/probe_runtime.py",
     "scripts/resolve_runtime.py",
     "scripts/bootstrap_runtime.py",
@@ -26,6 +27,7 @@ REQUIRED_FILES = [
     "scripts/pysidam_agent/capabilities.py",
     "scripts/pysidam_agent/read_file.py",
     "scripts/pysidam_agent/plot_spectrum.py",
+    "scripts/pysidam_agent/fit_gap.py",
     "runtime/constraints.txt",
     "runtime/requirements-core.txt",
     "runtime/requirements-nanonis.txt",
@@ -42,6 +44,7 @@ REQUIRED_FILES = [
     "references/pysidam-capability-map.md",
     "references/pysidam-capability-index.json",
     "references/task-cards/sts-dat-quick.md",
+    "references/task-cards/gap-fit-quick.md",
     "references/quality-checks.md",
     "references/reporting.md",
 ]
@@ -58,7 +61,9 @@ REQUIRED_TOKENS = {
         "scripts/bootstrap_runtime.py",
         "scripts/sync_installed_skill.py",
         "scripts/pysidam_agent/read_file.py",
+        "scripts/pysidam_agent/fit_gap.py",
         "references/task-cards/sts-dat-quick.md",
+        "references/task-cards/gap-fit-quick.md",
         "references/pysidam-capability-index.json",
         "runtime/requirements-core.txt",
     ],
@@ -67,6 +72,7 @@ REQUIRED_TOKENS = {
         "quick card",
         "scripts/resolve_runtime.py --probe",
         "scripts/pysidam_agent/read_file.py",
+        "scripts/pysidam_agent/fit_gap.py",
         "references/pysidam-capability-index.json",
         "references/runtime-bootstrap.md",
         "references/data-contracts.md",
@@ -172,6 +178,13 @@ REQUIRED_TOKENS = {
         "pysidam_agent/plot_spectrum.py",
         "no scientific conclusion",
     ],
+    "references/task-cards/gap-fit-quick.md": [
+        "Gap Fit Quick Card",
+        "pysidam_agent/fit_gap.py",
+        "fit_selected_gap_dos_model_guarded",
+        "Do not write a new optimizer",
+        "PySIDAM fitter import is blocked",
+    ],
     "references/quality-checks.md": [
         "Data-Contract Gates",
         "Fitting Gates",
@@ -193,6 +206,7 @@ REQUIRED_TOKENS = {
     "RELEASE_NOTES_v0.1.2.md": ["v0.1.2", "bootstrap_runtime.py", "isolated"],
     "RELEASE_NOTES_v0.1.3.md": ["v0.1.3", "resolve_runtime.py", "host.json"],
     "RELEASE_NOTES_v0.1.4.md": ["v0.1.4", "quick card", "pysidam_agent", "sync_installed_skill.py"],
+    "RELEASE_NOTES_v0.1.5.md": ["v0.1.5", "fit_gap.py", "fit_selected_gap_dos_model_guarded", "Do not write a new optimizer"],
     "scripts/probe_runtime.py": ["MODULES", "nanonispy", "Atom_Identificator_core", "git_info"],
     "scripts/resolve_runtime.py": [
         "HOST_CONFIG",
@@ -239,6 +253,15 @@ REQUIRED_TOKENS = {
         "matplotlib.use(\"Agg\")",
         "Bias calc (V)",
         "LI Demod 1 X",
+        "summary-json",
+    ],
+    "scripts/pysidam_agent/fit_gap.py": [
+        "fit_selected_gap_dos_model_guarded",
+        "pysidam_fitter_import_failed",
+        "Do not write a new optimizer",
+        "fit_strategy",
+        "fit_max_starts",
+        "initial_params",
         "summary-json",
     ],
     "runtime/requirements-core.txt": ["numpy", "scipy", "scikit-image", "matplotlib", "openpyxl"],
@@ -314,12 +337,31 @@ def check_portable_references() -> None:
             fail(f"{path.relative_to(ROOT)} contains Codex-specific control syntax")
 
 
+def check_fit_bridge_uses_pysidam_fitter() -> None:
+    path = ROOT / "scripts" / "pysidam_agent" / "fit_gap.py"
+    if not path.is_file():
+        fail("missing fit bridge: scripts/pysidam_agent/fit_gap.py")
+    text = path.read_text(encoding="utf-8")
+    if "fit_selected_gap_dos_model_guarded" not in text:
+        fail("fit_gap.py must call PySIDAM fit_selected_gap_dos_model_guarded")
+    forbidden = [
+        "from scipy.optimize import least_squares",
+        "from scipy.optimize import curve_fit",
+        "scipy.optimize.least_squares",
+        "scipy.optimize.curve_fit",
+    ]
+    bad = [token for token in forbidden if token in text]
+    if bad:
+        fail("fit_gap.py must not define its own optimizer: " + ", ".join(bad))
+
+
 def main() -> int:
     check_required_files()
     check_required_tokens()
     check_forbidden_tokens()
     check_skill_size()
     check_portable_references()
+    check_fit_bridge_uses_pysidam_fitter()
     print("PASS: stm-sjtm-data-processing package is structurally valid")
     return 0
 

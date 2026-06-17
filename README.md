@@ -20,7 +20,7 @@ For any STM/SJTM task, an agent should:
 1. Run `python3 scripts/resolve_runtime.py --probe` or perform the same cached-runtime import checks.
 2. If no cached runtime is ready and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
 3. For simple STS `.dat` reading or diagnostic plots, use the quick card `references/task-cards/sts-dat-quick.md`.
-4. Use `scripts/pysidam_agent/read_file.py` for compact file summaries and `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures.
+4. Use `scripts/pysidam_agent/read_file.py` for compact file summaries, `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures, and `scripts/pysidam_agent/fit_gap.py` with `references/task-cards/gap-fit-quick.md` for PySIDAM-backed superconducting gap fitting.
 5. For deeper tasks, classify the request using `references/workflow.md` and query `references/pysidam-capability-index.json` with `scripts/pysidam_agent/capabilities.py`.
 6. Before quantitative fitting, map extraction, phase claims, or scientific conclusions, read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
 7. Produce outputs that include inputs, data contracts, parameters, quality metrics, warnings, and reproducibility notes.
@@ -94,9 +94,10 @@ The bridge scripts under `scripts/pysidam_agent/` are thin, reusable adapters. T
 python3 scripts/pysidam_agent/capabilities.py --domain core_io
 python3 scripts/pysidam_agent/read_file.py data/example.dat --output-json outputs/read_summary.json
 python3 scripts/pysidam_agent/plot_spectrum.py data/example.dat --output outputs/spectrum.png --summary-json outputs/spectrum.json
+python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wave" --output-dir outputs/gap_fit
 ```
 
-The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested.
+The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For gap fitting, the bridge delegates to PySIDAM's `fit_selected_gap_dos_model_guarded`; if that UI-wrapped fitter cannot be imported, the bridge reports the blocker instead of writing a replacement optimizer.
 
 ## Codex Installation
 
@@ -149,4 +150,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.1.4`. Release notes live in `RELEASE_NOTES_v0.1.4.md`.
+The current release line is `v0.1.5`. Release notes live in `RELEASE_NOTES_v0.1.5.md`.

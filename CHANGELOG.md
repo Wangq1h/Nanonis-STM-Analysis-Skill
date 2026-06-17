@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.5 - 2026-06-17
+
+- Added `scripts/pysidam_agent/fit_gap.py` so superconducting gap fitting delegates to PySIDAM's `fit_selected_gap_dos_model_guarded`.
+- Added a gap-fitting quick card that forbids agent-written optimizer fallbacks when the PySIDAM fitter is available.
+- Extended validation to require the gap-fitting bridge and reject local optimizer imports inside it.
+- Updated routing docs so blocked PySIDAM fitter imports are reported explicitly instead of being silently replaced.
+
 ## v0.1.4 - 2026-06-17
 
 - Added a quick card path for common STS `.dat` reading and diagnostic plotting.

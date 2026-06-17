@@ -13,7 +13,8 @@
   "bridge_scripts": [
     "scripts/pysidam_agent/capabilities.py",
     "scripts/pysidam_agent/read_file.py",
-    "scripts/pysidam_agent/plot_spectrum.py"
+    "scripts/pysidam_agent/plot_spectrum.py",
+    "scripts/pysidam_agent/fit_gap.py"
   ],
   "domains": [
     {
@@ -121,6 +122,7 @@
           "module": "pysidam.core.superconducting_gap_models",
           "api": "evaluate_gap_dos_model, get_dynes_fit_model_defaults, build_gap_model_summary_params",
           "status": "HEADLESS_READY",
+          "bridge": "scripts/pysidam_agent/fit_gap.py",
           "models": ["isotropic_s", "d_wave", "anisotropic_s", "two_band", "three_band", "s_plus_d", "fese_two_band"]
         },
         {
@@ -128,7 +130,8 @@
           "module": "pysidam.spectroscopy.spectroscopy_dynes_fitting",
           "api": "DynesFitWindow, parallel_integration_worker",
           "status": "GUI_WRAPPED_EXTRACT",
-          "requires": ["PyQt5", "pyqtgraph", "scipy"]
+          "requires": ["PyQt5", "pyqtgraph", "scipy"],
+          "bridge": "scripts/pysidam_agent/fit_gap.py"
         },
         {
           "name": "spectroscopy_display",
