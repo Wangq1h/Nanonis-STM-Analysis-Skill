@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.1 - 2026-06-17
+
+- Added a required fitting-mode gate for ambiguous superconducting and two-band gap fitting requests.
+- Documented `strict-pysidam-compatible` versus `gap-priority experimental` modes so agents do not silently trade model comparability for better-looking fits.
+- Updated validation to require the mode-gate language in the skill entry point, gap-fit quick card, and fitting recipes.
+- Synced the installed Codex skill copy after the rule update.
+
 ## v0.2.0 - 2026-06-17
 
 - Added bundled `pysidam_agent_core` package for headless agent-facing algorithms.

@@ -19,6 +19,7 @@ REQUIRED_FILES = [
     "RELEASE_NOTES_v0.1.4.md",
     "RELEASE_NOTES_v0.1.5.md",
     "RELEASE_NOTES_v0.2.0.md",
+    "RELEASE_NOTES_v0.2.1.md",
     "pysidam_agent_core/__init__.py",
     "pysidam_agent_core/io.py",
     "pysidam_agent_core/models.py",
@@ -76,6 +77,7 @@ REQUIRED_TOKENS = {
     "SKILL.md": [
         "name: stm-sjtm-data-processing",
         "quick card",
+        "Ask the user to choose a fitting mode",
         "scripts/resolve_runtime.py --probe",
         "scripts/pysidam_agent/read_file.py",
         "scripts/pysidam_agent/fit_gap.py",
@@ -142,6 +144,8 @@ REQUIRED_TOKENS = {
         "SIS",
         "NIS",
         "Multipeak",
+        "strict-pysidam-compatible",
+        "gap-priority experimental",
         "Peak Height, Z-Ratio, And Bias Calibration",
     ],
     "references/pysidam-tool-map.md": [
@@ -188,6 +192,9 @@ REQUIRED_TOKENS = {
         "Gap Fit Quick Card",
         "pysidam_agent/fit_gap.py",
         "pysidam_agent_core.gap_fitting.fit_gap_model_guarded",
+        "Ask before fitting",
+        "strict-pysidam-compatible",
+        "gap-priority experimental",
         "Do not write a new optimizer",
         "PySIDAM UI fitter import is blocked",
     ],
@@ -214,6 +221,7 @@ REQUIRED_TOKENS = {
     "RELEASE_NOTES_v0.1.4.md": ["v0.1.4", "quick card", "pysidam_agent", "sync_installed_skill.py"],
     "RELEASE_NOTES_v0.1.5.md": ["v0.1.5", "fit_gap.py", "fit_selected_gap_dos_model_guarded", "Do not write a new optimizer"],
     "RELEASE_NOTES_v0.2.0.md": ["v0.2.0", "pysidam_agent_core", "headless", "fit_gap_model_guarded"],
+    "RELEASE_NOTES_v0.2.1.md": ["v0.2.1", "strict-pysidam-compatible", "gap-priority experimental", "Ask before fitting"],
     "pysidam_agent_core/__init__.py": ["fit_gap_model_guarded"],
     "pysidam_agent_core/io.py": ["load_signals", "read_nanonis_file", "read_imported_file"],
     "pysidam_agent_core/models.py": [

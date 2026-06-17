@@ -24,7 +24,7 @@ Run `scripts/resolve_runtime.py --probe` first when local execution is available
 For routine file identification, `.dat` spectroscopy summaries, or diagnostic plots, prefer a quick card and the bridge scripts before deep references:
 
 - `.dat` STS inspection: read `references/task-cards/sts-dat-quick.md`, then use `scripts/pysidam_agent/read_file.py` or `scripts/pysidam_agent/plot_spectrum.py`.
-- Superconducting gap fitting: read `references/task-cards/gap-fit-quick.md`, then use `scripts/pysidam_agent/fit_gap.py`, which calls `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`. Do not write a new optimizer when the headless core fitter is importable.
+- Superconducting gap fitting: read `references/task-cards/gap-fit-quick.md`, then use `scripts/pysidam_agent/fit_gap.py`, which calls `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`. Ask the user to choose a fitting mode when strict model compatibility versus gap-priority experimental fitting is ambiguous. Do not write a new optimizer when the headless core fitter is importable.
 - PySIDAM routing: read `references/pysidam-capability-map.md` or query `references/pysidam-capability-index.json` through `scripts/pysidam_agent/capabilities.py`.
 
 Before quantitative analysis, fitting, map extraction, phase claims, or scientific conclusions, also read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`. For file IO beyond a quick card, read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat` beyond basic inspection, also read `references/nanonis-3ds-ingest.md`.
@@ -55,6 +55,7 @@ Read only the relevant references for the current task after the required first 
 - For lock-in or QPI phase claims, save or request complex fields, amplitudes, phases, masks, and threshold sweeps.
 - For fitting claims, report fit status, residuals, boundary hits, parameter bounds, and failure modes.
 - For superconducting gap fitting, call the PySIDAM-backed `scripts/pysidam_agent/fit_gap.py` bridge first. If `pysidam_agent_core` or PySIDAM core model imports are blocked, report that blocker and do not silently fall back to an agent-written optimizer.
+- When a superconducting/two-band fit request does not clearly specify strict PySIDAM-compatible fitting or gap-priority experimental fitting, ask before fitting. Ask again for each later ambiguous request; do not reuse a previous choice unless the user explicitly says to.
 - Treat `pysidam` as a preferred tool source, not a mandatory dependency.
 - Use only isolated user-writable Python runtimes for missing dependencies; do not use `sudo`, root installs, global `pip`, `brew`, or conda base modifications.
 - Do not introduce dataset-specific paths or private experimental data into reusable skill files.
