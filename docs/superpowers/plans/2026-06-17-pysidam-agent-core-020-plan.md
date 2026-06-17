@@ -16,10 +16,10 @@
 - Modify: `scripts/validate_package.py`
 - Create: `RELEASE_NOTES_v0.2.0.md`
 
-- [ ] Add required files for `pysidam_agent_core/__init__.py`, `io.py`, `models.py`, `numerics.py`, `gap_fitting.py`, and release notes.
-- [ ] Add validation that `pysidam_agent_core` and `scripts/pysidam_agent/fit_gap.py` do not import `PyQt5`, `pyqtgraph`, `QApplication`, or `pysidam.useful_tools.usefultools_deconvolution_point`.
-- [ ] Add validation that `fit_gap.py` imports `pysidam_agent_core.gap_fitting`.
-- [ ] Run `python3 scripts/validate_package.py` and confirm it fails before implementation.
+- [x] Add required files for `pysidam_agent_core/__init__.py`, `io.py`, `models.py`, `numerics.py`, `gap_fitting.py`, and release notes.
+- [x] Add validation that `pysidam_agent_core` and `scripts/pysidam_agent/fit_gap.py` do not import `PyQt5`, `pyqtgraph`, `QApplication`, or `pysidam.useful_tools.usefultools_deconvolution_point`.
+- [x] Add validation that `fit_gap.py` imports `pysidam_agent_core.gap_fitting`.
+- [x] Run `python3 scripts/validate_package.py` and confirm it fails before implementation.
 
 ### Task 2: Headless Core Package
 
@@ -30,10 +30,10 @@
 - Create: `pysidam_agent_core/gap_fitting.py`
 - Create: `pysidam_agent_core/io.py`
 
-- [ ] Implement model wrappers around `pysidam.core.superconducting_gap_models` only.
-- [ ] Implement numerical helpers for array normalization, resampling, feature weights, peak-derived starts, affine scale/offset, and guarded time budgets.
-- [ ] Implement `fit_gap_model_guarded` with JSON-friendly result schema and no GUI imports.
-- [ ] Implement lightweight `io.py` helpers for future reuse without moving bridge-specific plotting into core.
+- [x] Implement model wrappers around `pysidam.core.superconducting_gap_models` only.
+- [x] Implement numerical helpers for array normalization, resampling, feature weights, peak-derived starts, affine scale/offset, and guarded time budgets.
+- [x] Implement `fit_gap_model_guarded` with JSON-friendly result schema and no GUI imports.
+- [x] Implement lightweight `io.py` helpers for future reuse without moving bridge-specific plotting into core.
 
 ### Task 3: Bridge Migration
 
@@ -42,21 +42,21 @@
 - Modify: `references/task-cards/gap-fit-quick.md`
 - Modify: `SKILL.md`, `README.md`, `references/fitting-recipes.md`, `references/pysidam-capability-index.json`, `references/pysidam-capability-map.md`, `CHANGELOG.md`
 
-- [ ] Change `fit_gap.py` to import `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`.
-- [ ] Change probe output to report `fit_engine="pysidam_agent_core.gap_fitting.fit_gap_model_guarded"`.
-- [ ] Remove UI bootstrap guidance from the default gap fitting path.
-- [ ] Update documentation and release line to 0.2.0.
+- [x] Change `fit_gap.py` to import `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`.
+- [x] Change probe output to report `fit_engine="pysidam_agent_core.gap_fitting.fit_gap_model_guarded"`.
+- [x] Remove UI bootstrap guidance from the default gap fitting path.
+- [x] Update documentation and release line to 0.2.0.
 
 ### Task 4: Runtime Verification
 
 **Files:**
 - No source edits unless verification finds an issue.
 
-- [ ] Run `python3 scripts/validate_package.py`.
-- [ ] Run `python3 scripts/pysidam_agent/fit_gap.py --probe-fitter`.
-- [ ] Run gap fitting on the clean test `.dat` files.
-- [ ] Build a temporary headless-only venv without `PyQt5/pyqtgraph`; run `fit_gap.py --probe-fitter` and one no-plot fit in that venv.
-- [ ] Sync installed skill and verify installed copy.
+- [x] Run `python3 scripts/validate_package.py`.
+- [x] Run `python3 scripts/pysidam_agent/fit_gap.py --probe-fitter`.
+- [x] Run gap fitting on the clean test `.dat` files.
+- [x] Build a temporary headless-only venv without `PyQt5/pyqtgraph`; run `fit_gap.py --probe-fitter` and one no-plot fit in that venv.
+- [x] Sync installed skill and verify installed copy.
 
 ### Task 5: Release
 

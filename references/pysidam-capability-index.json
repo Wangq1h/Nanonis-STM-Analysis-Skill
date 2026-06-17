@@ -126,6 +126,15 @@
           "models": ["isotropic_s", "d_wave", "anisotropic_s", "two_band", "three_band", "s_plus_d", "fese_two_band"]
         },
         {
+          "name": "agent_gap_model_fitting",
+          "module": "pysidam_agent_core.gap_fitting",
+          "api": "fit_gap_model_guarded, fit_gap_model",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy", "scipy", "pysidam.core.superconducting_gap_models"],
+          "bridge": "scripts/pysidam_agent/fit_gap.py",
+          "notes": "Default agent route for superconducting DOS fitting; does not import UI-wrapped PySIDAM fitter modules."
+        },
+        {
           "name": "dynes_spectroscopy_window_algorithms",
           "module": "pysidam.spectroscopy.spectroscopy_dynes_fitting",
           "api": "DynesFitWindow, parallel_integration_worker",
@@ -260,7 +269,8 @@
           "module": "pysidam.useful_tools.usefultools_deconvolution_point",
           "api": "fit_nis_dynes_didv, fit_sis_dynes_didv, run_sis_didv_deconvolution, fit_selected_gap_dos_model_guarded",
           "status": "GUI_WRAPPED_EXTRACT",
-          "requires": ["scipy"]
+          "requires": ["scipy"],
+          "notes": "Use pysidam_agent_core.gap_fitting for default headless superconducting gap fitting."
         },
         {
           "name": "trace_preparation",

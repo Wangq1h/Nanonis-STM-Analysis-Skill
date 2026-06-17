@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0 - 2026-06-17
+
+- Added bundled `pysidam_agent_core` package for headless agent-facing algorithms.
+- Migrated superconducting gap fitting to `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`.
+- Kept gap-model definitions and parameter specs delegated to `pysidam.core.superconducting_gap_models`.
+- Updated validation to reject UI-bound imports in the default gap-fitting bridge and core package.
+- Updated docs and quick cards so agents call the shared core fitter instead of creating task-local fitting scripts.
+
 ## v0.1.5 - 2026-06-17
 
 - Added `scripts/pysidam_agent/fit_gap.py` so superconducting gap fitting delegates to PySIDAM's `fit_selected_gap_dos_model_guarded`.

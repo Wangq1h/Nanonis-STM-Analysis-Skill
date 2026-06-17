@@ -6,6 +6,8 @@ Treat PySIDAM as the preferred source for proven STM/SJTM routines. Treat its de
 
 For repeated agent work, prefer the `pysidam_agent` bridge scripts and the capability index before reading large PySIDAM modules. The compact routing files are `references/pysidam-capability-index.json` and `references/pysidam-capability-map.md`.
 
+For repeated algorithms that were embedded in UI modules, prefer the bundled `pysidam_agent_core` package. In `v0.2.0`, `pysidam_agent_core.gap_fitting.fit_gap_model_guarded` is the default headless superconducting gap fitter used by `scripts/pysidam_agent/fit_gap.py`.
+
 ## Source And Sync
 
 Before using a source checkout:
@@ -56,6 +58,7 @@ Core model helpers:
 
 - `pysidam.core.superconducting_gap_models.evaluate_gap_dos_model`: isotropic s, d-wave, anisotropic s, two-band, three-band, s+d, and FeSe two-band anisotropic model evaluation.
 - `get_dynes_fit_model_defaults`, `get_deconvolution_fit_param_spec`, `map_deconvolution_fit_values`, `build_gap_model_summary_params`.
+- `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`: headless agent bridge for multistart superconducting gap fitting, using PySIDAM core model specs without importing UI modules.
 
 Peak and gap maps:
 
@@ -78,7 +81,7 @@ Point-spectrum headless helpers live in `pysidam.useful_tools.usefultools_deconv
 - Dynes and thermal kernels: `dynes_dos`, `compute_nis_didv_from_dos`, `compute_sis_didv_from_dos`.
 - Fixed-temperature fitting: `fit_nis_dynes_didv`, `fit_sis_dynes_didv`, `evaluate_fixed_nis_dynes_preview`, `evaluate_fixed_sis_dynes_preview`.
 - SIS deconvolution: `build_sis_didv_matrix`, `solve_sis_sample_dos`, `build_sis_deconvolution_grids`, `run_sis_didv_deconvolution`.
-- Gap DOS model fitting: `evaluate_selected_gap_dos_model`, `fit_selected_gap_dos_model`, `fit_selected_gap_dos_model_guarded`.
+- Gap DOS model fitting: historical functions include `evaluate_selected_gap_dos_model`, `fit_selected_gap_dos_model`, and `fit_selected_gap_dos_model_guarded`; the default agent path is now `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`.
 
 Grid deconvolution helpers in `pysidam.useful_tools.usefultools_deconvolution_grid` include bias-grid resampling, pseudo-inverse operators, trace integration, overlap stats, and R2 scoring.
 

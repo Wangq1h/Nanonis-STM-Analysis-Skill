@@ -24,7 +24,7 @@ Run `scripts/resolve_runtime.py --probe` first when local execution is available
 For routine file identification, `.dat` spectroscopy summaries, or diagnostic plots, prefer a quick card and the bridge scripts before deep references:
 
 - `.dat` STS inspection: read `references/task-cards/sts-dat-quick.md`, then use `scripts/pysidam_agent/read_file.py` or `scripts/pysidam_agent/plot_spectrum.py`.
-- Superconducting gap fitting: read `references/task-cards/gap-fit-quick.md`, then use `scripts/pysidam_agent/fit_gap.py`. Do not write a new optimizer when the PySIDAM fitter is importable.
+- Superconducting gap fitting: read `references/task-cards/gap-fit-quick.md`, then use `scripts/pysidam_agent/fit_gap.py`, which calls `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`. Do not write a new optimizer when the headless core fitter is importable.
 - PySIDAM routing: read `references/pysidam-capability-map.md` or query `references/pysidam-capability-index.json` through `scripts/pysidam_agent/capabilities.py`.
 
 Before quantitative analysis, fitting, map extraction, phase claims, or scientific conclusions, also read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`. For file IO beyond a quick card, read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat` beyond basic inspection, also read `references/nanonis-3ds-ingest.md`.
@@ -50,11 +50,11 @@ Read only the relevant references for the current task after the required first 
 - Keep report-facing 2D maps as `(y, x)` and report-facing spectroscopy cubes as `(y, x, bias)`. When calling PySIDAM core, respect its internal 3DS order `(x, y, bias)` and record any explicit transpose.
 - Record all unit conversions, bias dividers, background corrections, smoothing, interpolation, window functions, q selections, and masks.
 - For raw Nanonis `.3ds`, `.sxm`, or `.dat`, use `nanonispy` through `pysidam.core.nanonis_io` when available. Do not hand-roll a binary parser unless all documented readers are unavailable and the user explicitly approves that fallback.
-- Prefer PySIDAM headless/core functions. Do not instantiate Qt windows or `QApplication` for data analysis unless the user explicitly asks for the GUI.
+- Prefer PySIDAM headless/core functions and bundled `pysidam_agent_core` adapters. Do not instantiate Qt windows or `QApplication` for data analysis unless the user explicitly asks for the GUI.
 - Do not make phase conclusions from real-IFFT images alone.
 - For lock-in or QPI phase claims, save or request complex fields, amplitudes, phases, masks, and threshold sweeps.
 - For fitting claims, report fit status, residuals, boundary hits, parameter bounds, and failure modes.
-- For superconducting gap fitting, call the PySIDAM-backed `scripts/pysidam_agent/fit_gap.py` bridge first. If PySIDAM's fitter import is blocked, report that blocker and do not silently fall back to an agent-written optimizer.
+- For superconducting gap fitting, call the PySIDAM-backed `scripts/pysidam_agent/fit_gap.py` bridge first. If `pysidam_agent_core` or PySIDAM core model imports are blocked, report that blocker and do not silently fall back to an agent-written optimizer.
 - Treat `pysidam` as a preferred tool source, not a mandatory dependency.
 - Use only isolated user-writable Python runtimes for missing dependencies; do not use `sudo`, root installs, global `pip`, `brew`, or conda base modifications.
 - Do not introduce dataset-specific paths or private experimental data into reusable skill files.

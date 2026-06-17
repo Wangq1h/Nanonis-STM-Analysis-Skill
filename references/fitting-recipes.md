@@ -75,14 +75,15 @@ Outputs:
 
 pysidam mapping:
 
-- Default agent route: `scripts/pysidam_agent/fit_gap.py`, which delegates fitting to `fit_selected_gap_dos_model_guarded`.
+- Default agent route: `scripts/pysidam_agent/fit_gap.py`, which delegates fitting to `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`.
+- `pysidam_agent_core.gap_fitting` contains the headless multistart, feature-weight, fit-window, and affine-normalization implementation used by agents.
 - `pysidam.core.superconducting_gap_models.evaluate_gap_dos_model` for model evaluation and parameter defaults.
 - `pysidam.useful_tools.usefultools_deconvolution_point.fit_nis_dynes_didv` and `fit_sis_dynes_didv` for fixed-temperature Dynes-style dI/dV fitting.
-- `pysidam.useful_tools.usefultools_deconvolution_point.fit_selected_gap_dos_model_guarded` for guarded superconducting DOS fitting with fit-status metadata.
+- `pysidam.useful_tools.usefultools_deconvolution_point.fit_selected_gap_dos_model_guarded` is the historical GUI-wrapped source behavior; do not import it in the default agent path.
 - `pysidam.useful_tools.usefultools_deconvolution_point.run_sis_didv_deconvolution` for SIS deconvolution when tip DOS, sample DOS assumptions, temperature, and normalization are known.
 - `pysidam.useful_tools.usefultools_deconvolution_grid` for grid-based resampling, pseudo-inverse deconvolution, and R2/statistics helpers.
 
-If a fitting helper lives in a GUI-heavy module and Qt import fails, report the blocked import. Do not replace PySIDAM's fitter with a newly written optimizer unless the user explicitly approves that fallback for exploratory work.
+If a fitting helper lives in a GUI-heavy module and Qt import fails, use the documented headless bridge when available and report the blocked import. Do not replace the shared core fitter with a newly written task-local optimizer unless the user explicitly approves that fallback for exploratory work.
 
 ## Multipeak Fitting
 

@@ -97,7 +97,7 @@ python3 scripts/pysidam_agent/plot_spectrum.py data/example.dat --output outputs
 python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wave" --output-dir outputs/gap_fit
 ```
 
-The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For gap fitting, the bridge delegates to PySIDAM's `fit_selected_gap_dos_model_guarded`; if that UI-wrapped fitter cannot be imported, the bridge reports the blocker instead of writing a replacement optimizer.
+The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For gap fitting, the bridge delegates to the bundled headless `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`, which uses PySIDAM core model definitions without importing UI-wrapped fitter modules.
 
 ## Codex Installation
 
@@ -128,7 +128,7 @@ Agents that do not support Codex skills can read this repository directly:
 
 ## pysidam Relationship
 
-`pysidam` is treated as the preferred implementation source. When it is available, agents should use `references/pysidam-capability-index.json`, `references/pysidam-capability-map.md`, and `references/pysidam-tool-map.md` to select headless modules and functions. Raw Nanonis `.3ds`, `.sxm`, and `.dat` require `nanonispy` through the normal PySIDAM route; missing `nanonispy` should be reported as a dependency gap, not worked around with an unverified binary parser. PXP is not claimed as supported by the current PySIDAM-backed skill.
+`pysidam` is treated as the preferred implementation source. When it is available, agents should use `references/pysidam-capability-index.json`, `references/pysidam-capability-map.md`, and `references/pysidam-tool-map.md` to select headless modules and functions. The repository also ships `pysidam_agent_core/`, a small headless package that extracts repeated agent-facing algorithms while continuing to use PySIDAM core model definitions. Raw Nanonis `.3ds`, `.sxm`, and `.dat` require `nanonispy` through the normal PySIDAM route; missing `nanonispy` should be reported as a dependency gap, not worked around with an unverified binary parser. PXP is not claimed as supported by the current PySIDAM-backed skill.
 
 PySIDAM is not assumed to be a standard pip package. The bootstrapper first uses an explicit `--pysidam-root`, `PYSIDAM_ROOT`, or nearby source checkout. If none is found and network is available, it can clone the PySIDAM repository into the skill cache and load it as source. It does not mutate existing user checkouts.
 
@@ -150,4 +150,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.1.5`. Release notes live in `RELEASE_NOTES_v0.1.5.md`.
+The current release line is `v0.2.0`. Release notes live in `RELEASE_NOTES_v0.2.0.md`.

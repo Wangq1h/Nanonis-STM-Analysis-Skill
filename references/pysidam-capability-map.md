@@ -14,7 +14,7 @@ This map is the human-readable companion to the machine-readable capability inde
 
 - Raw Nanonis `.dat`, `.sxm`, `.3ds`: use `scripts/pysidam_agent/read_file.py`.
 - Basic `.dat` overview plots: use `scripts/pysidam_agent/plot_spectrum.py` and the STS quick card.
-- Superconducting gap fitting: use `scripts/pysidam_agent/fit_gap.py` and the gap fit quick card.
+- Superconducting gap fitting: use `scripts/pysidam_agent/fit_gap.py`, the bundled `pysidam_agent_core` fitter, and the gap fit quick card.
 - Capability lookup: use `scripts/pysidam_agent/capabilities.py --json`, or filter with `--domain` and `--status`.
 
 ## Domain Routing
@@ -31,3 +31,5 @@ This map is the human-readable companion to the machine-readable capability inde
 - `utility_export`: crop, histogram, path visualization, publication export, and Nanonis writers.
 
 When a domain is `GUI_WRAPPED_EXTRACT`, prefer documenting the exact PySIDAM function/class and required inputs over instantiating windows. Add a new `pysidam_agent` adapter when a task repeats or when speed/token use matters.
+
+`pysidam_agent_core` is the preferred location for repeated headless algorithms that were originally embedded in PySIDAM UI modules. In `v0.2.0`, superconducting gap fitting is the first migrated domain.

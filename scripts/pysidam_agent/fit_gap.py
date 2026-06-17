@@ -19,49 +19,38 @@ DEFAULT_BIAS_CHANNEL = "Bias calc (V)"
 DEFAULT_SIGNAL_CHANNEL = "LI Demod 1 X"
 DEFAULT_MODEL = "Two Band s-wave"
 DEFAULT_FIT_STRATEGY = "multistart_weighted"
-PYSIDAM_FIT_ENGINE = (
-    "pysidam.useful_tools.usefultools_deconvolution_point."
-    "fit_selected_gap_dos_model_guarded"
-)
+SKILL_ROOT = Path(__file__).resolve().parents[2]
+if str(SKILL_ROOT) not in sys.path:
+    sys.path.insert(0, str(SKILL_ROOT))
+PYSIDAM_FIT_ENGINE = "pysidam_agent_core.gap_fitting.fit_gap_model_guarded"
 
 
-def import_pysidam_fitter() -> tuple[Any | None, dict[str, Any]]:
+def import_core_fitter() -> tuple[Any | None, dict[str, Any]]:
     try:
-        from pysidam.useful_tools.usefultools_deconvolution_point import (
-            fit_selected_gap_dos_model_guarded,
-        )
+        from pysidam_agent_core.gap_fitting import fit_gap_model_guarded
     except Exception as exc:
         return None, {
             "ok": False,
-            "status": "pysidam_fitter_import_failed",
+            "status": "pysidam_agent_core_import_failed",
             "error_type": type(exc).__name__,
             "error": str(exc),
             "fit_engine": PYSIDAM_FIT_ENGINE,
-            "required_action": "Install or enable PySIDAM's UI-wrapped fitting dependencies in the isolated skill runtime.",
-            "safe_bootstrap": "python3 scripts/bootstrap_runtime.py --groups headless,ui",
-            "policy": "Do not write a new optimizer as fallback.",
+            "required_action": "Install or expose PySIDAM core modules in the isolated skill runtime.",
+            "safe_bootstrap": "python3 scripts/bootstrap_runtime.py --groups headless,nanonis,ibw",
+            "policy": "Do not write a task-local optimizer as fallback.",
         }
-    return fit_selected_gap_dos_model_guarded, {
+    return fit_gap_model_guarded, {
         "ok": True,
         "status": "ready",
         "fit_engine": PYSIDAM_FIT_ENGINE,
-        "policy": "Do not write a new optimizer; this bridge delegates fitting to PySIDAM.",
+        "policy": "Do not write a task-local optimizer; this bridge delegates fitting to pysidam_agent_core.",
     }
 
 
 def load_signals(path: Path) -> tuple[dict[str, Any], str]:
-    suffix = path.suffix.lower()
-    if suffix == ".dat":
-        from pysidam.core.nanonis_io import read_nanonis_file
+    from pysidam_agent_core.io import load_signals as core_load_signals
 
-        nf = read_nanonis_file(path)
-        return getattr(nf.obj, "signals", {}), "pysidam.core.nanonis_io.read_nanonis_file"
-    if suffix in {".txt", ".csv", ".tsv", ".ibw"}:
-        from pysidam.core.import_io import read_imported_file
-
-        imported = read_imported_file(path)
-        return getattr(imported.obj, "signals", {}), "pysidam.core.import_io.read_imported_file"
-    raise ValueError(f"Unsupported gap-fit input suffix: {suffix}")
+    return core_load_signals(path)
 
 
 def read_spectrum(
@@ -154,8 +143,8 @@ def fit_one(fitter: Any, spectrum: dict[str, Any], args: argparse.Namespace) -> 
     }
     result["fit_engine"] = PYSIDAM_FIT_ENGINE
     result["fit_policy"] = {
-        "delegated_to_pysidam": True,
-        "no_local_optimizer": True,
+        "delegated_to_pysidam_agent_core": True,
+        "no_task_local_optimizer": True,
         "initial_params": initial_params,
         "fit_strategy": args.fit_strategy,
         "fit_max_starts": args.fit_max_starts,
@@ -228,14 +217,15 @@ def strip_arrays(result: dict[str, Any]) -> dict[str, Any]:
         "bias_fit",
         "rho_data_fit",
         "rho_model_fit",
+        "residual_display",
     }
     return {key: value for key, value in result.items() if key not in array_keys}
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Fit spectra through PySIDAM's existing gap-model fitter.")
+    parser = argparse.ArgumentParser(description="Fit spectra through the bundled headless PySIDAM agent core.")
     parser.add_argument("inputs", nargs="*", type=Path, help="Input .dat, text, csv, tsv, or 1D .ibw spectra.")
-    parser.add_argument("--probe-fitter", action="store_true", help="Only report whether the PySIDAM fitter can be imported.")
+    parser.add_argument("--probe-fitter", action="store_true", help="Only report whether the headless fit core can be imported.")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/gap_fit"))
     parser.add_argument("--summary-json", type=Path, default=None)
     parser.add_argument("--model", default=DEFAULT_MODEL)
@@ -252,7 +242,7 @@ def main() -> int:
     args = parser.parse_args()
 
     runtime = ensure_runtime(reexec=True)
-    fitter, fitter_status = import_pysidam_fitter()
+    fitter, fitter_status = import_core_fitter()
     if args.probe_fitter:
         write_json(args.summary_json or Path("fit_gap_probe.json"), {"runtime": runtime, "fitter": fitter_status})
         return 0 if fitter_status["ok"] else 3

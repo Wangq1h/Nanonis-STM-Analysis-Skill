@@ -18,6 +18,12 @@ REQUIRED_FILES = [
     "RELEASE_NOTES_v0.1.3.md",
     "RELEASE_NOTES_v0.1.4.md",
     "RELEASE_NOTES_v0.1.5.md",
+    "RELEASE_NOTES_v0.2.0.md",
+    "pysidam_agent_core/__init__.py",
+    "pysidam_agent_core/io.py",
+    "pysidam_agent_core/models.py",
+    "pysidam_agent_core/numerics.py",
+    "pysidam_agent_core/gap_fitting.py",
     "scripts/probe_runtime.py",
     "scripts/resolve_runtime.py",
     "scripts/bootstrap_runtime.py",
@@ -181,9 +187,9 @@ REQUIRED_TOKENS = {
     "references/task-cards/gap-fit-quick.md": [
         "Gap Fit Quick Card",
         "pysidam_agent/fit_gap.py",
-        "fit_selected_gap_dos_model_guarded",
+        "pysidam_agent_core.gap_fitting.fit_gap_model_guarded",
         "Do not write a new optimizer",
-        "PySIDAM fitter import is blocked",
+        "PySIDAM UI fitter import is blocked",
     ],
     "references/quality-checks.md": [
         "Data-Contract Gates",
@@ -207,6 +213,26 @@ REQUIRED_TOKENS = {
     "RELEASE_NOTES_v0.1.3.md": ["v0.1.3", "resolve_runtime.py", "host.json"],
     "RELEASE_NOTES_v0.1.4.md": ["v0.1.4", "quick card", "pysidam_agent", "sync_installed_skill.py"],
     "RELEASE_NOTES_v0.1.5.md": ["v0.1.5", "fit_gap.py", "fit_selected_gap_dos_model_guarded", "Do not write a new optimizer"],
+    "RELEASE_NOTES_v0.2.0.md": ["v0.2.0", "pysidam_agent_core", "headless", "fit_gap_model_guarded"],
+    "pysidam_agent_core/__init__.py": ["fit_gap_model_guarded"],
+    "pysidam_agent_core/io.py": ["load_signals", "read_nanonis_file", "read_imported_file"],
+    "pysidam_agent_core/models.py": [
+        "pysidam.core.superconducting_gap_models",
+        "evaluate_gap_dos_model",
+        "get_deconvolution_fit_param_spec",
+    ],
+    "pysidam_agent_core/numerics.py": [
+        "normalize_xy_arrays",
+        "feature_weights",
+        "detect_gap_peak_positions",
+        "solve_affine_reference_scale_offset",
+    ],
+    "pysidam_agent_core/gap_fitting.py": [
+        "fit_gap_model_guarded",
+        "fit_gap_model",
+        "least_squares",
+        "fit_feature_weighted",
+    ],
     "scripts/probe_runtime.py": ["MODULES", "nanonispy", "Atom_Identificator_core", "git_info"],
     "scripts/resolve_runtime.py": [
         "HOST_CONFIG",
@@ -256,9 +282,10 @@ REQUIRED_TOKENS = {
         "summary-json",
     ],
     "scripts/pysidam_agent/fit_gap.py": [
-        "fit_selected_gap_dos_model_guarded",
-        "pysidam_fitter_import_failed",
-        "Do not write a new optimizer",
+        "pysidam_agent_core.gap_fitting",
+        "fit_gap_model_guarded",
+        "pysidam_agent_core_import_failed",
+        "Do not write a task-local optimizer",
         "fit_strategy",
         "fit_max_starts",
         "initial_params",
@@ -342,8 +369,8 @@ def check_fit_bridge_uses_pysidam_fitter() -> None:
     if not path.is_file():
         fail("missing fit bridge: scripts/pysidam_agent/fit_gap.py")
     text = path.read_text(encoding="utf-8")
-    if "fit_selected_gap_dos_model_guarded" not in text:
-        fail("fit_gap.py must call PySIDAM fit_selected_gap_dos_model_guarded")
+    if "pysidam_agent_core.gap_fitting" not in text or "fit_gap_model_guarded" not in text:
+        fail("fit_gap.py must call pysidam_agent_core.gap_fitting.fit_gap_model_guarded")
     forbidden = [
         "from scipy.optimize import least_squares",
         "from scipy.optimize import curve_fit",
@@ -352,7 +379,26 @@ def check_fit_bridge_uses_pysidam_fitter() -> None:
     ]
     bad = [token for token in forbidden if token in text]
     if bad:
-        fail("fit_gap.py must not define its own optimizer: " + ", ".join(bad))
+        fail("fit_gap.py must keep optimization inside pysidam_agent_core: " + ", ".join(bad))
+
+
+def check_headless_core_boundary() -> None:
+    checked_files = list((ROOT / "pysidam_agent_core").glob("*.py"))
+    checked_files.append(ROOT / "scripts" / "pysidam_agent" / "fit_gap.py")
+    forbidden = [
+        "PyQt5",
+        "pyqtgraph",
+        "QApplication",
+        "QWidget",
+        "pysidam.useful_tools.usefultools_deconvolution_point",
+    ]
+    for path in checked_files:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        bad = [token for token in forbidden if token in text]
+        if bad:
+            fail(f"{path.relative_to(ROOT)} imports UI-bound fitting code: {', '.join(bad)}")
 
 
 def main() -> int:
@@ -362,6 +408,7 @@ def main() -> int:
     check_skill_size()
     check_portable_references()
     check_fit_bridge_uses_pysidam_fitter()
+    check_headless_core_boundary()
     print("PASS: stm-sjtm-data-processing package is structurally valid")
     return 0
 
