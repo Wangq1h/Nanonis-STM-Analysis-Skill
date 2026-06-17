@@ -19,12 +19,21 @@ Before acting, classify the user request:
 6. Cross-observable comparison.
 7. Reporting and evidence packaging.
 
-Always read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md` before processing data or proposing scientific conclusions. Run `scripts/resolve_runtime.py --probe` first when local execution is available so an existing cached runtime is reused across directories. If no cached runtime is ready, use `scripts/bootstrap_runtime.py` to create an isolated user runtime before file IO or fitting. For file IO, also read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat`, also read `references/nanonis-3ds-ingest.md` before attempting file IO.
+Run `scripts/resolve_runtime.py --probe` first when local execution is available so an existing cached runtime is reused across directories. If no cached runtime is ready, inspect `scripts/resolve_runtime.py --bootstrap-command` and use `scripts/bootstrap_runtime.py` only in an isolated user runtime.
+
+For routine file identification, `.dat` spectroscopy summaries, or diagnostic plots, prefer a quick card and the bridge scripts before deep references:
+
+- `.dat` STS inspection: read `references/task-cards/sts-dat-quick.md`, then use `scripts/pysidam_agent/read_file.py` or `scripts/pysidam_agent/plot_spectrum.py`.
+- PySIDAM routing: read `references/pysidam-capability-map.md` or query `references/pysidam-capability-index.json` through `scripts/pysidam_agent/capabilities.py`.
+
+Before quantitative analysis, fitting, map extraction, phase claims, or scientific conclusions, also read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`. For file IO beyond a quick card, read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat` beyond basic inspection, also read `references/nanonis-3ds-ingest.md`.
 
 ## Reference Routing
 
 - For overall workflow, read `references/workflow.md`.
 - For runtime dependency checks, persistent cached runtimes, host-specific `pysidam` discovery, and default imports, read `references/runtime-bootstrap.md`.
+- For fast task entry, read the relevant quick card in `references/task-cards/`.
+- For PySIDAM capability lookup and agent bridge entry points, read `references/pysidam-capability-map.md` and query `references/pysidam-capability-index.json`.
 - For supported file formats, reader entry points, object contracts, and unsupported formats, read `references/format-io-matrix.md`.
 - For raw Nanonis `.3ds`, `.sxm`, `.dat`, topography extraction, bias divider handling, or target-energy slices, read `references/nanonis-3ds-ingest.md`.
 - For spectroscopy fitting, superconducting gap fitting, multipeak fitting, gap maps, Z-ratio, or bias calibration, read `references/fitting-recipes.md`.

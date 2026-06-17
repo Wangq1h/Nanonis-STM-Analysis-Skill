@@ -50,6 +50,8 @@ python3 scripts/bootstrap_runtime.py --groups headless
 
 `headless` expands to `core,nanonis,ibw`. This creates or reuses a per-skill virtual environment under a user-writable cache such as `~/.cache/stm-sjtm-data-processing`, installs the selected dependency groups, probes the resulting runtime, and writes `runtime.json` in the cache. A later task in a different directory should reuse this cache through `resolve_runtime.py --probe`, not bootstrap again.
 
+For installed Codex skills, sync from the source repository with `scripts/sync_installed_skill.py`. The installed directory should not carry `.git` metadata; the source repository remains the Git working copy.
+
 Safety rules:
 
 - Use only user-writable paths.

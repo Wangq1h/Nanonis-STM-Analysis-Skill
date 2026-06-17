@@ -16,9 +16,16 @@ REQUIRED_FILES = [
     "RELEASE_NOTES_v0.1.1.md",
     "RELEASE_NOTES_v0.1.2.md",
     "RELEASE_NOTES_v0.1.3.md",
+    "RELEASE_NOTES_v0.1.4.md",
     "scripts/probe_runtime.py",
     "scripts/resolve_runtime.py",
     "scripts/bootstrap_runtime.py",
+    "scripts/sync_installed_skill.py",
+    "scripts/pysidam_agent/__init__.py",
+    "scripts/pysidam_agent/common.py",
+    "scripts/pysidam_agent/capabilities.py",
+    "scripts/pysidam_agent/read_file.py",
+    "scripts/pysidam_agent/plot_spectrum.py",
     "runtime/constraints.txt",
     "runtime/requirements-core.txt",
     "runtime/requirements-nanonis.txt",
@@ -32,6 +39,9 @@ REQUIRED_FILES = [
     "references/nanonis-3ds-ingest.md",
     "references/fitting-recipes.md",
     "references/pysidam-tool-map.md",
+    "references/pysidam-capability-map.md",
+    "references/pysidam-capability-index.json",
+    "references/task-cards/sts-dat-quick.md",
     "references/quality-checks.md",
     "references/reporting.md",
 ]
@@ -46,10 +56,18 @@ REQUIRED_TOKENS = {
         "scripts/probe_runtime.py",
         "scripts/resolve_runtime.py",
         "scripts/bootstrap_runtime.py",
+        "scripts/sync_installed_skill.py",
+        "scripts/pysidam_agent/read_file.py",
+        "references/task-cards/sts-dat-quick.md",
+        "references/pysidam-capability-index.json",
         "runtime/requirements-core.txt",
     ],
     "SKILL.md": [
         "name: stm-sjtm-data-processing",
+        "quick card",
+        "scripts/resolve_runtime.py --probe",
+        "scripts/pysidam_agent/read_file.py",
+        "references/pysidam-capability-index.json",
         "references/runtime-bootstrap.md",
         "references/data-contracts.md",
         "references/quality-checks.md",
@@ -118,6 +136,8 @@ REQUIRED_TOKENS = {
         "origin/main",
         "pysidam.core.nanonis_io",
         "pysidam.core.dataset_utils",
+        "pysidam_agent",
+        "references/pysidam-capability-index.json",
         "Do not instantiate Qt",
         "LFDriftCorrector",
         "PeakFitter.fit_single_pixel",
@@ -126,6 +146,31 @@ REQUIRED_TOKENS = {
         "lockin_phase_extraction",
         "SJTMIcExtractionWindow",
         "SJTMSuperfluidDensityWindow",
+    ],
+    "references/pysidam-capability-map.md": [
+        "PySIDAM Capability Map",
+        "HEADLESS_READY",
+        "GUI_WRAPPED_EXTRACT",
+        "OPTIONAL_DEP",
+        "pysidam_agent",
+        "capability index",
+    ],
+    "references/pysidam-capability-index.json": [
+        "\"schema_version\"",
+        "\"pysidam_commit\"",
+        "\"HEADLESS_READY\"",
+        "\"GUI_WRAPPED_EXTRACT\"",
+        "\"core_io\"",
+        "\"qpi_lockin\"",
+        "\"sjtm\"",
+        "\"deconvolution\"",
+    ],
+    "references/task-cards/sts-dat-quick.md": [
+        "STS DAT Quick Card",
+        "resolve_runtime.py --probe",
+        "pysidam_agent/read_file.py",
+        "pysidam_agent/plot_spectrum.py",
+        "no scientific conclusion",
     ],
     "references/quality-checks.md": [
         "Data-Contract Gates",
@@ -147,6 +192,7 @@ REQUIRED_TOKENS = {
     "RELEASE_NOTES_v0.1.1.md": ["v0.1.1", "runtime bootstrap", "probe_runtime.py"],
     "RELEASE_NOTES_v0.1.2.md": ["v0.1.2", "bootstrap_runtime.py", "isolated"],
     "RELEASE_NOTES_v0.1.3.md": ["v0.1.3", "resolve_runtime.py", "host.json"],
+    "RELEASE_NOTES_v0.1.4.md": ["v0.1.4", "quick card", "pysidam_agent", "sync_installed_skill.py"],
     "scripts/probe_runtime.py": ["MODULES", "nanonispy", "Atom_Identificator_core", "git_info"],
     "scripts/resolve_runtime.py": [
         "HOST_CONFIG",
@@ -165,6 +211,35 @@ REQUIRED_TOKENS = {
         "--no-network",
         "subprocess.check_call",
         "runtime.json",
+    ],
+    "scripts/sync_installed_skill.py": [
+        "remove_installed_git",
+        "stm-sjtm-data-processing",
+        ".codex/skills",
+        "dry-run",
+    ],
+    "scripts/pysidam_agent/common.py": [
+        "ensure_runtime",
+        "STM_SJTM_AGENT_RUNTIME_REEXEC",
+        "runtime.json",
+        "pysidam_root",
+    ],
+    "scripts/pysidam_agent/capabilities.py": [
+        "pysidam-capability-index.json",
+        "--domain",
+        "--status",
+    ],
+    "scripts/pysidam_agent/read_file.py": [
+        "read_nanonis_file",
+        "read_imported_file",
+        "privacy",
+        "signals_summary",
+    ],
+    "scripts/pysidam_agent/plot_spectrum.py": [
+        "matplotlib.use(\"Agg\")",
+        "Bias calc (V)",
+        "LI Demod 1 X",
+        "summary-json",
     ],
     "runtime/requirements-core.txt": ["numpy", "scipy", "scikit-image", "matplotlib", "openpyxl"],
     "runtime/requirements-nanonis.txt": ["nanonispy"],
@@ -211,8 +286,12 @@ def check_required_tokens() -> None:
 
 
 def check_forbidden_tokens() -> None:
-    markdown_files = list(ROOT.glob("*.md")) + list((ROOT / "references").glob("*.md"))
-    for path in markdown_files:
+    checked_files = (
+        list(ROOT.glob("*.md"))
+        + list((ROOT / "references").rglob("*.md"))
+        + list((ROOT / "references").rglob("*.json"))
+    )
+    for path in checked_files:
         text = path.read_text(encoding="utf-8")
         bad = [token for token in FORBIDDEN_TOKENS if token in text]
         if bad:

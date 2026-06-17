@@ -4,6 +4,8 @@ Use this reference when `pysidam` is available as an installed package or source
 
 Treat PySIDAM as the preferred source for proven STM/SJTM routines. Treat its desktop windows as UI wrappers, not as the default agent interface.
 
+For repeated agent work, prefer the `pysidam_agent` bridge scripts and the capability index before reading large PySIDAM modules. The compact routing files are `references/pysidam-capability-index.json` and `references/pysidam-capability-map.md`.
+
 ## Source And Sync
 
 Before using a source checkout:

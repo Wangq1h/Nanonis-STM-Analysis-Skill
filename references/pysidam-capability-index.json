@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "pysidam_remote": "https://github.com/Wangq1h/pysidam.git",
+  "pysidam_commit": "f42e433a909e4347773ac2a45067c6f112cd5709",
+  "indexed_at": "2026-06-17",
+  "status_tags": [
+    "HEADLESS_READY",
+    "GUI_WRAPPED_EXTRACT",
+    "GUI_ONLY",
+    "OPTIONAL_DEP",
+    "UNSUPPORTED"
+  ],
+  "bridge_scripts": [
+    "scripts/pysidam_agent/capabilities.py",
+    "scripts/pysidam_agent/read_file.py",
+    "scripts/pysidam_agent/plot_spectrum.py"
+  ],
+  "domains": [
+    {
+      "domain": "core_io",
+      "capabilities": [
+        {
+          "name": "raw_nanonis_read",
+          "formats": [".3ds", ".sxm", ".dat"],
+          "module": "pysidam.core.nanonis_io",
+          "api": "read_nanonis_file",
+          "status": "HEADLESS_READY",
+          "requires": ["nanonispy"],
+          "bridge": "scripts/pysidam_agent/read_file.py"
+        },
+        {
+          "name": "imported_text_ibw_read",
+          "formats": [".txt", ".csv", ".tsv", ".ibw"],
+          "module": "pysidam.core.import_io",
+          "api": "read_imported_file",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy"],
+          "bridge": "scripts/pysidam_agent/read_file.py"
+        },
+        {
+          "name": "numeric_table_contract",
+          "formats": [".txt", ".csv", ".tsv"],
+          "module": "pysidam.core.import_io",
+          "api": "imported_file_to_numeric_table",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy"]
+        },
+        {
+          "name": "nanonis_export",
+          "formats": [".dat", ".3ds"],
+          "module": "pysidam.core.export",
+          "api": "write_nanonis_spec_dat, write_nanonis_grid_3ds",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy"]
+        },
+        {
+          "name": "pxp_read",
+          "formats": [".pxp"],
+          "module": "",
+          "api": "",
+          "status": "UNSUPPORTED",
+          "notes": "PySIDAM has no PXP reader in the indexed commit."
+        }
+      ]
+    },
+    {
+      "domain": "bias_dataset_contracts",
+      "capabilities": [
+        {
+          "name": "bias_normalization",
+          "module": "pysidam.core.bias_utils",
+          "api": "normalize_bias_with_divider, normalize_imported_bias_to_mv, apply_bias_divider_to_mv",
+          "status": "HEADLESS_READY"
+        },
+        {
+          "name": "3ds_dataset_preparation",
+          "module": "pysidam.core.dataset_utils",
+          "api": "prepare_3ds_dataset, normalize_3ds_signal_dict, choose_best_bias_axis",
+          "status": "HEADLESS_READY",
+          "contract": "internal cube order is (x, y, bias)"
+        },
+        {
+          "name": "sxm_direction_normalization",
+          "module": "pysidam.core.dataset_utils",
+          "api": "normalize_sxm_direction_map, extract_sxm_scan_dir, extract_scan_size_nm",
+          "status": "HEADLESS_READY"
+        }
+      ]
+    },
+    {
+      "domain": "topography",
+      "capabilities": [
+        {
+          "name": "low_frequency_drift_correction",
+          "module": "pysidam.topography.topography_correction",
+          "api": "LFDriftCorrector.get_q_vector, lockin_phase, compute_drift_field, warp_image",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["numpy", "scipy", "skimage"]
+        },
+        {
+          "name": "ai_atom_detection",
+          "module": "pysidam.topography.topography_ai_identificator",
+          "api": "_get_atom_detector_cls",
+          "status": "OPTIONAL_DEP",
+          "requires": ["Atom_Identificator_core"]
+        },
+        {
+          "name": "topography_display_filter",
+          "module": "pysidam.topography.topography_display, pysidam.topography.topography_filter",
+          "api": "TopographyWindow, FFTFilterWindow",
+          "status": "GUI_ONLY",
+          "requires": ["PyQt5", "pyqtgraph"]
+        }
+      ]
+    },
+    {
+      "domain": "spectroscopy_fitting",
+      "capabilities": [
+        {
+          "name": "gap_model_evaluation",
+          "module": "pysidam.core.superconducting_gap_models",
+          "api": "evaluate_gap_dos_model, get_dynes_fit_model_defaults, build_gap_model_summary_params",
+          "status": "HEADLESS_READY",
+          "models": ["isotropic_s", "d_wave", "anisotropic_s", "two_band", "three_band", "s_plus_d", "fese_two_band"]
+        },
+        {
+          "name": "dynes_spectroscopy_window_algorithms",
+          "module": "pysidam.spectroscopy.spectroscopy_dynes_fitting",
+          "api": "DynesFitWindow, parallel_integration_worker",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["PyQt5", "pyqtgraph", "scipy"]
+        },
+        {
+          "name": "spectroscopy_display",
+          "module": "pysidam.spectroscopy.spectroscopy_display",
+          "api": "SpectroscopyDisplayWindow",
+          "status": "GUI_ONLY",
+          "requires": ["PyQt5", "pyqtgraph"],
+          "bridge": "scripts/pysidam_agent/plot_spectrum.py"
+        }
+      ]
+    },
+    {
+      "domain": "linecut_maps",
+      "capabilities": [
+        {
+          "name": "gap_map_peak_extraction",
+          "module": "pysidam.linecutmap.linecutmap_gap_map_extraction",
+          "api": "PeakFitter.fit_single_pixel, plane_flatten",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        },
+        {
+          "name": "multipeak_fitting",
+          "module": "pysidam.linecutmap.linecutmap_multipeak_fitting",
+          "api": "UniversalVortexFitterEngine.run_fit, evaluate_at, collect_debug_state_payload",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        },
+        {
+          "name": "intensity_derivative_maps",
+          "module": "pysidam.linecutmap.linecutmap_intensity",
+          "api": "Intensity1DWindow, Intensity2DWindow, create_intensity_window",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "notes": "Includes dI/dV, d2, and neg_d3 intensity conventions."
+        },
+        {
+          "name": "waterfall_and_grid_views",
+          "module": "pysidam.linecutmap.linecutmap_waterfall",
+          "api": "GridSpectroscopyWindow, MapSpectroscopyWindow, create_waterfall_window",
+          "status": "GUI_ONLY"
+        }
+      ]
+    },
+    {
+      "domain": "qpi_lockin",
+      "capabilities": [
+        {
+          "name": "fft_volume",
+          "module": "pysidam.qpi_analysis.qpi_display",
+          "api": "_compute_fft_base_volume, _postprocess_fft_volume, _prepare_fft_block",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "fft_windowing",
+          "module": "pysidam.core.fft_windowing",
+          "api": "prepare_fft_input, build_windowed_fft_complex, apply_fft_display_scale, apply_fft_dc_mask",
+          "status": "HEADLESS_READY"
+        },
+        {
+          "name": "lockin_phase",
+          "module": "pysidam.qpi_analysis.qpi_phase_analysis, pysidam.qpi_analysis.qpi_real_phase",
+          "api": "lockin_phase_extraction, lockin_phase, _refine_peak_near, _unwrap_phase_2d",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "pr_qpi_pqpi",
+          "module": "pysidam.qpi_analysis.qpi_pr_pqi",
+          "api": "_compute_pr_qpi_volume",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "qpi_symmetry_and_lf_correction",
+          "module": "pysidam.qpi_analysis.qpi_symmetry",
+          "api": "apply_affine_to_stack, build_affine_from_bragg_vectors, estimate_lf_displacement, symmetrize_qpi, _compute_fft_volume",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "one_dimensional_qpi",
+          "module": "pysidam.qpi_analysis.qpi_1D_QPI",
+          "api": "QPI1DWindow",
+          "status": "GUI_ONLY"
+        }
+      ]
+    },
+    {
+      "domain": "sjtm",
+      "capabilities": [
+        {
+          "name": "josephson_current_map",
+          "module": "pysidam.sjtm.sjtm_ic",
+          "api": "SJTMIcExtractionWindow._compute_ic_row, _compute_ic_map",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        },
+        {
+          "name": "superfluid_density_proxy",
+          "module": "pysidam.sjtm.sjtm_superfluid",
+          "api": "SJTMSuperfluidDensityWindow._compute_metrics, _resolve_g0_window_mask, _fit_gaussian_segment",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        }
+      ]
+    },
+    {
+      "domain": "spstm",
+      "capabilities": [
+        {
+          "name": "spstm_didv_contrast",
+          "module": "pysidam.spstm.spstm_didv_contrast",
+          "api": "SPSTMDidVContrastWindow",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "spstm_map_topography_qpi_contrast",
+          "module": "pysidam.spstm.spstm_map_contrast, pysidam.spstm.spstm_topography_contrast, pysidam.spstm.spstm_qpi_contrast",
+          "api": "SPSTMMapContrastWindow, SPSTMTopographyContrastWindow, SPSTMQPIContrastWindow",
+          "status": "GUI_ONLY"
+        }
+      ]
+    },
+    {
+      "domain": "deconvolution",
+      "capabilities": [
+        {
+          "name": "sis_nis_point_deconvolution",
+          "module": "pysidam.useful_tools.usefultools_deconvolution_point",
+          "api": "fit_nis_dynes_didv, fit_sis_dynes_didv, run_sis_didv_deconvolution, fit_selected_gap_dos_model_guarded",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        },
+        {
+          "name": "trace_preparation",
+          "module": "pysidam.useful_tools.usefultools_deconvolution_point",
+          "api": "symmetrize_bias_trace, resample_trace, build_symmetric_energy_grid, extract_temperature_from_header",
+          "status": "HEADLESS_READY"
+        },
+        {
+          "name": "grid_deconvolution",
+          "module": "pysidam.useful_tools.usefultools_deconvolution_grid",
+          "api": "_build_linear_resample_matrix, _build_pinv_operator, _compute_r2_score, _nanmean_cube_over_pixels",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["scipy"]
+        }
+      ]
+    },
+    {
+      "domain": "utility_export",
+      "capabilities": [
+        {
+          "name": "ibw_export",
+          "module": "pysidam.core.optional_deps, pysidam.core.export",
+          "api": "IgorWave, write_nanonis_spec_dat, write_nanonis_grid_3ds",
+          "status": "OPTIONAL_DEP",
+          "requires": ["igorwriter"]
+        },
+        {
+          "name": "histogram_crop_path_viz",
+          "module": "pysidam.useful_tools.usefultools_histogram, pysidam.useful_tools.usefultools_map_crop, pysidam.useful_tools.usefultools_path_viz",
+          "api": "HistogramWindow, UsefulToolsMapCropWindow, SurfaceSurveyPathVizWindow",
+          "status": "GUI_ONLY"
+        },
+        {
+          "name": "publication_editor",
+          "module": "pysidam.core.publication_editor",
+          "api": "capture_pyqtgraph_plot, capture_matplotlib_canvas, PublicationFigureWindow",
+          "status": "GUI_ONLY"
+        }
+      ]
+    }
+  ]
+}

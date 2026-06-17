@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.4 - 2026-06-17
+
+- Added a quick card path for common STS `.dat` reading and diagnostic plotting.
+- Added `scripts/pysidam_agent/` bridge commands for compact PySIDAM-backed file summaries, spectrum plots, and capability lookup.
+- Added a machine-readable PySIDAM capability index covering core IO, topography, spectroscopy fitting, linecut maps, QPI/lock-in, SJTM, SPSTM, deconvolution, and utility export.
+- Added `scripts/sync_installed_skill.py` so the installed Codex skill copy is synchronized without Git metadata.
+- Updated the skill entry point to use resolver-first quick routing before loading deep references.
+
 ## v0.1.3 - 2026-06-16
 
 - Added `scripts/resolve_runtime.py` so agents reuse a cached runtime across project directories before bootstrapping.
