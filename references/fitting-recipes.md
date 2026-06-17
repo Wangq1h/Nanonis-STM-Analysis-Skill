@@ -60,7 +60,7 @@ Model choices:
 Mode choices:
 
 - `strict-pysidam-compatible`: preserve the PySIDAM model contract so parameters are comparable to the default bridge output. Do not add unrequested bias offsets, polynomial backgrounds, independent broadening, or custom weighting.
-- `gap-priority experimental`: use recorded nuisance terms and weights to prioritize zero-bias platforms and coherence peaks. This may include bias offset, independent band broadening, fit-window selection, and background terms; report it as an extended observation model.
+- `gap-priority experimental`: use recorded nuisance terms and weights to prioritize zero-bias platforms and coherence peaks. This may include bias offset, independent band broadening, fit-window selection, and background terms; report it as an extended observation model. Prefer `--profile two_band_splusminus_gap_priority` for two-band STS spectra.
 
 If the user request is ambiguous between these modes, ask before fitting. Ask again for future ambiguous superconducting/two-band fits instead of assuming the last choice.
 
@@ -79,6 +79,7 @@ Outputs:
 - Fit status.
 - Diagnostic plot.
 - Machine-readable table or JSON entry.
+- For gap-priority profile runs: `report.json`, per-curve CSV, per-fit PNG, and `fit_overlay_overview.png`.
 
 pysidam mapping:
 

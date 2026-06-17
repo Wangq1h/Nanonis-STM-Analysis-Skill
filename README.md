@@ -150,4 +150,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.2.1`. Release notes live in `RELEASE_NOTES_v0.2.1.md`.
+The current release line is `v0.2.2`. Release notes live in `RELEASE_NOTES_v0.2.2.md`.

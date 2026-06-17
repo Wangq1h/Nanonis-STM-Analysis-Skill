@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.2 - 2026-06-17
+
+- Added `pysidam_agent_core.gap_priority` with the `two_band_splusminus_gap_priority` profile.
+- Added `fit_gap.py --profile two_band_splusminus_gap_priority --symmetry --auto-fit-window --save-overview`.
+- Packaged peak/center weighting, candidate fit-window scanning, bias offset, linear/quadratic background, independent band broadening, sym/unsym comparisons, and center/peak/boundary-hit metrics.
+- Made the gap-priority route save `report.json`, per-curve CSV files, per-fit PNG files, and `fit_overlay_overview.png`.
+- Updated the gap-fit quick card to require diagnostic plots for quantitative fitting outputs.
+
 ## v0.2.1 - 2026-06-17
 
 - Added a required fitting-mode gate for ambiguous superconducting and two-band gap fitting requests.
