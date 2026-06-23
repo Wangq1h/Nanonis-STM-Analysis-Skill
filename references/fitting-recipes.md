@@ -45,6 +45,7 @@ Preprocessing:
 
 - Remove or fit offsets only when recorded.
 - Select a fit window that contains the coherence peaks and enough normal-state tail.
+- When the agent chooses the fit interval, use a `fit_window` approval gate before executing the fit. Show representative spectra, the proposed interval, alternatives, and risk notes.
 - Avoid smoothing unless the smoothing method and parameter are reported.
 - For symmetrization, report the grid and zero-bias reference.
 
@@ -110,6 +111,8 @@ Input contract:
 Preprocessing:
 
 - Define search windows per peak.
+- When the agent chooses search windows or fit intervals, use a `fit_window` approval gate before batch fitting.
+- When the agent chooses how many peaks to fit, use a `peak_count` approval gate before formal multipeak fitting.
 - Define background model.
 - Define smoothing only when justified.
 - Exclude ZBP when fitting side peaks if the ZBP dominates the local maximum.

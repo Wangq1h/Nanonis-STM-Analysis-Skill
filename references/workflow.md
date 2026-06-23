@@ -42,9 +42,10 @@ Typical sequence:
 1. Confirm bias axis unit and direction.
 2. Display representative spectra and mean spectra.
 3. Decide whether the task needs peak extraction or physical DOS fitting.
-4. Apply normalization, smoothing, symmetrization, or bias calibration only when recorded in the report.
-5. Fit single spectra before batch maps.
-6. For batch maps, output value maps, status maps, and representative diagnostics.
+4. If the agent chooses a fitting interval or peak-search interval, stop at a `fit_window` approval gate before fitting.
+5. Apply normalization, smoothing, symmetrization, or bias calibration only when recorded in the report.
+6. Fit single spectra before batch maps.
+7. For batch maps, output value maps, status maps, and representative diagnostics.
 
 ## 5. SJTM-Specific Maps
 
@@ -58,10 +59,11 @@ Typical sequence:
 2. Apply a named window function.
 3. Compute FFT and apply display scaling.
 4. Mask the DC component when appropriate.
-5. Select or refine target q points.
-6. Extract complex lock-in fields.
-7. Save amplitude, phase, complex field, and masks.
-8. Treat `+q`, `-q`, `qx`, and `qy` separately before any merge.
+5. Select or refine target q points as a proposal, with FFT evidence and uncertainty.
+6. Stop at a `q_selection` approval gate before any q-vector, q-window, or filter-sigma-dependent extraction.
+7. Extract complex lock-in fields after approval.
+8. Save amplitude, phase, complex field, and masks.
+9. Treat `+q`, `-q`, `qx`, and `qy` separately before any merge.
 
 ## 7. Cross-Observable Analysis
 
@@ -72,6 +74,7 @@ Compare topography, dI/dV, gap maps, SJTM maps, atom sites, displacement, strain
 Every substantial workflow should produce:
 
 - `report.json` with inputs, contracts, parameters, quality metrics, warnings, outputs, and software provenance.
+- Approval proposal and decision artifacts when a gated choice was used.
 - Data outputs as NPZ or named CSV files.
 - Diagnostic PNG or PDF figures.
 - Notes separating measured results from interpretation when interpretation is requested.

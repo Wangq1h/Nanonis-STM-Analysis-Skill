@@ -47,6 +47,16 @@ Record:
 
 Do not make phase conclusions from real-IFFT images alone. Treat `+q`, `-q`, `qx`, and `qy` separately before merging.
 
+## Approval Gates
+
+Use an approval gate when the agent must choose a scientifically sensitive parameter before execution:
+
+- `fit_window`: superconducting coherence-peak fit ranges, peak-search windows, or other fitting intervals.
+- `q_selection`: FFT-derived q vectors, q windows, and filter sigma for lock-in, QPI, p_LL, or symmetry analysis.
+- `peak_count`: the number of peaks in multipeak fitting.
+
+Other steps can proceed without a separate approval gate when they are routine and fully recorded. Gated runs must keep `approval_proposal.json`, `approval_decision.json` or a recorded `user_preapproved` choice, the review figure or HTML, and a report link to the decision.
+
 ## Cross-Observable Gates
 
 Before comparing observables, confirm:

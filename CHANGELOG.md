@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.3 - 2026-06-23
+
+- Added standardized approval gates for agent-chosen `fit_window`, `q_selection`, and `peak_count` decisions.
+- Added a pure-Python approval schema validator, report-link validator, and static HTML review renderer.
+- Added `scripts/approval_gate.py` for validating `approval_proposal.json`, validating `approval_decision.json`, checking report linkage, and rendering review pages.
+- Added fast tool routing so agents query the capability map before scanning large PySIDAM modules.
+
 ## v0.2.2 - 2026-06-17
 
 - Added `pysidam_agent_core.gap_priority` with the `two_band_splusminus_gap_priority` profile.

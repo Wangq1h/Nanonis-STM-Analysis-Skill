@@ -13,6 +13,7 @@ preprocessing
 analysis
 parameters
 quality
+approval
 warnings
 outputs
 software
@@ -27,6 +28,7 @@ interpretation
 - `analysis`: selected workflow, model family, fitting method, q selection, lock-in method, or comparison method.
 - `parameters`: numerical settings with units.
 - `quality`: fit statuses, residuals, boundary hits, mask coverage, threshold sweeps, and diagnostic summaries.
+- `approval`: approval gate records for gated `fit_window`, `q_selection`, or `peak_count` decisions, including proposal path, decision path, approved parameters, and approval source.
 - `warnings`: missing metadata, weak assumptions, failed fits, coordinate uncertainty, or model non-uniqueness.
 - `outputs`: relative paths to NPZ, CSV, PNG, PDF, and auxiliary files.
 - `software`: package names, versions, source paths, and commit hashes when available.
@@ -39,6 +41,8 @@ Use this layout when the user has not specified another one:
 ```text
 analysis-output/
   report.json
+  approval_proposal.json
+  approval_decision.json
   data.npz
   tables/
   figures/
@@ -53,3 +57,5 @@ Separate measured outputs from claims:
 - Interpretation: a physical explanation or hypothesis based on measured results.
 
 If a quality gate fails, state the limitation in `warnings` and weaken the interpretation.
+
+For gated workflows, the report must link the approval gate decision. Do not report final fit-window, q-selection, filter-sigma, or peak-count dependent outputs as approved unless the `approval.decision_path` points to a valid decision artifact or the user explicitly provided `user_preapproved` parameters.

@@ -1,6 +1,6 @@
 # STM/SJTM Data Processing Agent Skill
 
-This repository contains a portable agent skill for scanning tunneling microscopy and superconducting-tip STM data processing. It helps agents choose workflows, preserve data contracts, map tasks to `pysidam` when available, apply fitting recipes, enforce quality gates, and produce reproducible evidence packages.
+This repository contains a portable agent skill for scanning tunneling microscopy and superconducting-tip STM data processing. It helps agents choose workflows, preserve data contracts, map tasks to `pysidam` when available, apply fitting recipes, enforce quality and approval gates, and produce reproducible evidence packages.
 
 The package is documentation-first, with small portable helper scripts for runtime probing, safe dependency bootstrapping, installed-skill syncing, and an agent bridge over PySIDAM. It does not contain private experimental data or dataset-specific scripts.
 
@@ -11,6 +11,7 @@ The package is documentation-first, with small portable helper scripts for runti
 - SJTM workflows including Josephson-current maps, zero-bias conductance or superfluid proxies, gap-height maps, Z-ratio maps, and SIS/NIS deconvolution guidance.
 - Fourier, QPI, and complex lock-in phase analysis with amplitude-gated statistics.
 - Cross-observable comparison across topography, spectroscopy, gap maps, atom sites, strain, and phase fields.
+- Standardized user approval gates for agent-selected fit windows, FFT/q-vector and filter-sigma choices, and multipeak peak counts.
 - Reproducible reporting with machine-readable outputs and diagnostic figures.
 
 ## Quick Start
@@ -23,7 +24,8 @@ For any STM/SJTM task, an agent should:
 4. Use `scripts/pysidam_agent/read_file.py` for compact file summaries, `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures, and `scripts/pysidam_agent/fit_gap.py` with `references/task-cards/gap-fit-quick.md` for PySIDAM-backed superconducting gap fitting.
 5. For deeper tasks, classify the request using `references/workflow.md` and query `references/pysidam-capability-index.json` with `scripts/pysidam_agent/capabilities.py`.
 6. Before quantitative fitting, map extraction, phase claims, or scientific conclusions, read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
-7. Produce outputs that include inputs, data contracts, parameters, quality metrics, warnings, and reproducibility notes.
+7. If the agent chooses a fitting interval, q vector/q window/filter sigma, or multipeak peak count, use `references/approval-gates.md` and stop for user approval before formal execution.
+8. Produce outputs that include inputs, data contracts, parameters, approval decisions when gated, quality metrics, warnings, and reproducibility notes.
 
 ## Runtime Bootstrap
 
@@ -99,6 +101,25 @@ python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wa
 
 The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For gap fitting, the bridge delegates to the bundled headless `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`, which uses PySIDAM core model definitions without importing UI-wrapped fitter modules.
 
+## Approval Gates
+
+Version `v0.2.3` adds a standard approval workflow for scientifically sensitive agent choices:
+
+- `fit_window`: fitting intervals, superconducting coherence-peak windows, and peak-search windows.
+- `q_selection`: FFT-derived q vectors, q windows, and filter sigma for QPI, lock-in, p_LL, or phase analysis.
+- `peak_count`: number of peaks in multipeak fitting.
+
+Agents create `approval_proposal.json`, optionally render a static review page with `scripts/approval_gate.py render-html`, wait for approval or modification, then continue only from `approval_decision.json`. Routine IO, previews, crop QC, summaries, and exports remain provenance-only and do not require separate approval.
+
+Useful commands:
+
+```bash
+python3 scripts/approval_gate.py validate-proposal --proposal approval_proposal.json
+python3 scripts/approval_gate.py render-html --proposal approval_proposal.json --output approval_review.html
+python3 scripts/approval_gate.py validate-decision --decision approval_decision.json
+python3 scripts/approval_gate.py validate-report --report report.json --decision-path approval_decision.json
+```
+
 ## Codex Installation
 
 Copy or synchronize this repository root to:
@@ -150,4 +171,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.2.2`. Release notes live in `RELEASE_NOTES_v0.2.2.md`.
+The current release line is `v0.2.3`. Release notes live in `RELEASE_NOTES_v0.2.3.md`.
