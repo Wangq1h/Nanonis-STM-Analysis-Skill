@@ -14,7 +14,8 @@
     "scripts/pysidam_agent/capabilities.py",
     "scripts/pysidam_agent/read_file.py",
     "scripts/pysidam_agent/plot_spectrum.py",
-    "scripts/pysidam_agent/fit_gap.py"
+    "scripts/pysidam_agent/fit_gap.py",
+    "scripts/pysidam_agent/bragg_phase.py"
   ],
   "domains": [
     {
@@ -203,7 +204,15 @@
           "name": "lockin_phase",
           "module": "pysidam.qpi_analysis.qpi_phase_analysis, pysidam.qpi_analysis.qpi_real_phase",
           "api": "lockin_phase_extraction, lockin_phase, _refine_peak_near, _unwrap_phase_2d",
-          "status": "GUI_WRAPPED_EXTRACT"
+          "status": "GUI_WRAPPED_EXTRACT",
+          "bridge": "scripts/pysidam_agent/bragg_phase.py"
+        },
+        {
+          "name": "bragg_phase_bridge",
+          "module": "pysidam_agent_core.bragg_phase",
+          "api": "q_selection_policy, find_peak_in_roi, preprocess_topography; CLI policy, inspect-roi, lockin-from-decision",
+          "status": "HEADLESS_READY",
+          "bridge": "scripts/pysidam_agent/bragg_phase.py"
         },
         {
           "name": "pr_qpi_pqpi",

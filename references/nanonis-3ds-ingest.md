@@ -36,7 +36,7 @@ cubes_xyb, bias_mv, scan_size_nm, topo_xy = prepare_3ds_dataset(
     grid.signals,
     header=getattr(grid, "header", None),
     bias=getattr(grid, "bias", None),
-    divider=100.0,
+    divider=1.0,
 )
 ```
 
@@ -67,11 +67,17 @@ PySIDAM bias normalization:
 - Applies `bias_mv / divider`.
 - Chooses among explicit bias, `grid.bias`, `sweep_signal`, bias-like channels, and `params`.
 
+Operational rule for this skill:
+
+- Raw Nanonis `.3ds` bias axes from the experiment software are treated as already divider-corrected.
+- Use `divider=1.0` by default. Do not infer extra software scaling from header comments such as `divider=1/100`.
+- Apply another divider only when the user explicitly requests extra scaling for that run, and record it as user-provided.
+
 Always record:
 
 - Raw bias source.
 - Whether the axis was already mV.
-- Divider value.
+- Divider value and whether it was the default no-rescale policy or explicit user-requested extra scaling.
 - Final bias axis min, max, length, and selected index.
 
 For an STS energy target in meV, use the same numeric value on the final mV axis after divider handling.

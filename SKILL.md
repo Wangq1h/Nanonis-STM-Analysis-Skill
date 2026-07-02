@@ -27,22 +27,25 @@ Before reading PySIDAM source modules or scanning the skill tree, route by inten
 
 | User intent | First route | Read next only if needed |
 | --- | --- | --- |
-| Identify or summarize `.dat`, `.3ds`, `.sxm`, `.ibw`, `.csv`, `.tsv`, or `.txt` files | `scripts/pysidam_agent/read_file.py` | `references/format-io-matrix.md`; for raw Nanonis also `references/nanonis-3ds-ingest.md` |
+| Identify or summarize `.dat`, `.3ds`, `.sxm`, `.ibw`, `.csv`, `.tsv`, or `.txt` files | `scripts/pysidam_agent/read_file.py --quick` for structural checks; omit `--quick` for full inventory | `references/format-io-matrix.md`; for raw Nanonis also `references/nanonis-3ds-ingest.md` |
 | Plot routine STS `.dat` spectra or channel summaries | `references/task-cards/sts-dat-quick.md`, then `scripts/pysidam_agent/plot_spectrum.py` | `references/data-contracts.md` for quantitative follow-up |
 | Fit superconducting gaps or DOS models | `references/task-cards/gap-fit-quick.md`, then `scripts/pysidam_agent/fit_gap.py` | `references/fitting-recipes.md`; ask for mode when ambiguous |
 | Extract peak-based gap maps or fit peak windows | `references/fitting-recipes.md` and `scripts/pysidam_agent/capabilities.py --query gap_map` | `references/approval-gates.md` when the agent chooses fit windows |
 | Run multipeak fitting or choose peak count | `references/fitting-recipes.md` and `scripts/pysidam_agent/capabilities.py --query multipeak` | `references/approval-gates.md` before formal batch fitting |
-| Do FFT, QPI, q-vector selection, lock-in phase, p_LL, or symmetry analysis | `scripts/pysidam_agent/capabilities.py --query lockin` or `--domain qpi_lockin` | `references/pysidam-tool-map.md`; `references/approval-gates.md` before q/sigma-dependent execution |
+| Do Bragg FFT peak checks, q-vector selection, or lock-in phase | `scripts/pysidam_agent/bragg_phase.py policy`, then `inspect-roi` or `lockin-from-decision` as appropriate | `references/approval-gates.md`; `references/pysidam-tool-map.md` only if the bridge is insufficient |
+| Do broader QPI, p_LL, PR-QPI/PQPI, or symmetry analysis | `scripts/pysidam_agent/capabilities.py --query lockin` or `--domain qpi_lockin` | `references/pysidam-tool-map.md`; `references/approval-gates.md` before q/sigma-dependent execution |
 | Process topography, drift correction, atom/site registration | `scripts/pysidam_agent/capabilities.py --domain topography` | `references/workflow.md`, `references/quality-checks.md` |
 | Compute SJTM Josephson, superfluid, Z-ratio, intensity, or deconvolution outputs | `scripts/pysidam_agent/capabilities.py --domain sjtm` or `--query deconvolution` | relevant workflow/fitting references and reporting gates |
 | Build a reproducible evidence package or review outputs | `references/reporting.md` and `references/quality-checks.md` | domain reference only for fields under review |
 
 If no route matches, query `references/pysidam-capability-index.json` through `scripts/pysidam_agent/capabilities.py --query KEYWORD` before opening large PySIDAM modules. Do not build a fresh source index unless the capability map and targeted text search are insufficient.
 
-For routine file identification, `.dat` spectroscopy summaries, or diagnostic plots, prefer a quick card and the bridge scripts before deep references:
+For routine file identification, symlink checks, `.dat` spectroscopy summaries, or diagnostic plots, prefer a quick card and the bridge scripts before deep references:
 
-- `.dat` STS inspection: read `references/task-cards/sts-dat-quick.md`, then use `scripts/pysidam_agent/read_file.py` or `scripts/pysidam_agent/plot_spectrum.py`.
+- Raw file or symlink inspection: use shell `readlink`/`find -L` plus `scripts/pysidam_agent/read_file.py --quick`; do not generate full reports or plots unless the user asks for formal analysis.
+- `.dat` STS inspection: read `references/task-cards/sts-dat-quick.md`, then use `scripts/pysidam_agent/read_file.py --quick` or `scripts/pysidam_agent/plot_spectrum.py`.
 - Superconducting gap fitting: read `references/task-cards/gap-fit-quick.md`, then use `scripts/pysidam_agent/fit_gap.py`, which calls `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`. Ask the user to choose a fitting mode when strict model compatibility versus gap-priority experimental fitting is ambiguous. Do not write a new optimizer when the headless core fitter is importable.
+- Bragg phase analysis: if the user did not provide an exact q vector or ROI, first ask whether they want to specify the peak/ROI or allow agent search. If they provide q/ROI, use it first and record `user_preapproved` or user-preferred ROI. Use `scripts/pysidam_agent/bragg_phase.py inspect-roi` for user ROI peak checks and `lockin-from-decision` for approved phase extraction.
 - PySIDAM routing: read `references/pysidam-capability-map.md` or query `references/pysidam-capability-index.json` through `scripts/pysidam_agent/capabilities.py`.
 
 Before quantitative analysis, fitting, map extraction, phase claims, or scientific conclusions, also read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`. For file IO beyond a quick card, read `references/format-io-matrix.md`. For raw Nanonis `.3ds`, `.sxm`, or `.dat` beyond basic inspection, also read `references/nanonis-3ds-ingest.md`.
@@ -67,11 +70,13 @@ Read only the relevant references for the current task after the required first 
 
 - Confirm array shape, axis order, bias unit, coordinate frame, and scan size before quantitative analysis.
 - Keep report-facing 2D maps as `(y, x)` and report-facing spectroscopy cubes as `(y, x, bias)`. When calling PySIDAM core, respect its internal 3DS order `(x, y, bias)` and record any explicit transpose.
+- For raw Nanonis `.3ds`, treat the stored bias axis as already corrected by the experimental software. Use divider `1.0` by default; do not apply extra scaling from header comments such as `divider=1/100` unless the user explicitly requests extra scaling.
 - Record all unit conversions, bias dividers, background corrections, smoothing, interpolation, window functions, q selections, and masks.
 - For raw Nanonis `.3ds`, `.sxm`, or `.dat`, use `nanonispy` through `pysidam.core.nanonis_io` when available. Do not hand-roll a binary parser unless all documented readers are unavailable and the user explicitly approves that fallback.
 - Prefer PySIDAM headless/core functions and bundled `pysidam_agent_core` adapters. Do not instantiate Qt windows or `QApplication` for data analysis unless the user explicitly asks for the GUI.
 - Do not make phase conclusions from real-IFFT images alone.
 - For lock-in or QPI phase claims, save or request complex fields, amplitudes, phases, masks, and threshold sweeps.
+- For Bragg/lock-in phase requests with no exact q vector or ROI, ask before running agent peak search. Human-specified q vectors or ROIs take priority over agent search. Use `scripts/pysidam_agent/bragg_phase.py policy` to enforce this decision point.
 - Use an approval gate before executing agent-chosen `fit_window`, `q_selection` including q vectors/windows/filter sigma, or `peak_count` decisions. Create `approval_proposal.json`, show the user the recommendation and evidence, then continue only after `approval_decision.json` or explicit `user_preapproved` parameters are recorded.
 - Other routine preprocessing and display parameters do not need a separate approval gate, but they must still be recorded in provenance.
 - For fitting claims, report fit status, residuals, boundary hits, parameter bounds, and failure modes.

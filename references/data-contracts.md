@@ -15,12 +15,12 @@ Use this reference before quantitative STM/SJTM analysis. Do not infer axis orde
 Record:
 
 - Unit: mV or meV.
-- Divider or scale factor.
+- Divider or scale factor. For raw Nanonis `.3ds`, default to divider `1.0` because the stored bias axis is treated as already divider-corrected by the experiment software.
 - Sweep direction.
 - Whether the axis is measured, calibrated globally, or calibrated pixelwise.
 - Interpolation method used to sample spectra at target energies.
 
-When the bias unit or divider cannot be determined, stop and request metadata or exported axis information.
+Header comments such as `divider=1/100` are experimental metadata, not automatic read-time scaling instructions. Apply extra scaling only when the user explicitly requests it. When the bias unit itself cannot be determined, stop and request metadata or exported axis information.
 
 ## Coordinate Frame
 

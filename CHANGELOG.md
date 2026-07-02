@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.4 - 2026-07-02
+
+- Added reusable Bragg/q-selection and lock-in bridge tooling through `scripts/pysidam_agent/bragg_phase.py`.
+- Added `pysidam_agent_core.bragg_phase` for q-selection policy, ROI peak checks, topography preprocessing, and reusable Bragg phase helpers.
+- Added a user-q/ROI-first rule: if the user asks for phase analysis without a q vector or ROI, agents must ask before running their own peak search.
+- Updated `.3ds` bias handling so the default read contract uses divider `1.0` and treats Nanonis bias axes as already divider-corrected by experiment software.
+- Added `read_file.py --quick` and machine-readable `read_parameters` for fast raw-data and symlink inspection without full evidence-package overhead.
+- Added tests for divider contract and Bragg q-selection helpers.
+
 ## v0.2.3 - 2026-06-23
 
 - Added standardized approval gates for agent-chosen `fit_window`, `q_selection`, and `peak_count` decisions.

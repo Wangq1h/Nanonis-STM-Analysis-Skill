@@ -13,8 +13,10 @@ This map is the human-readable companion to the machine-readable capability inde
 ## Fast Agent Routes
 
 - Raw Nanonis `.dat`, `.sxm`, `.3ds`: use `scripts/pysidam_agent/read_file.py`.
+- Quick raw-data or symlink inspection: use `scripts/pysidam_agent/read_file.py --quick` after shell `readlink`/`find -L` checks.
 - Basic `.dat` overview plots: use `scripts/pysidam_agent/plot_spectrum.py` and the STS quick card.
 - Superconducting gap fitting: use `scripts/pysidam_agent/fit_gap.py`, the bundled `pysidam_agent_core` fitter, and the gap fit quick card.
+- Bragg q selection and lock-in phase: use `scripts/pysidam_agent/bragg_phase.py policy`, `inspect-roi`, and `lockin-from-decision`.
 - Capability lookup: use `scripts/pysidam_agent/capabilities.py --json`, or filter with `--domain` and `--status`.
 
 ## Domain Routing

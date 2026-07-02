@@ -21,7 +21,7 @@ For any STM/SJTM task, an agent should:
 1. Run `python3 scripts/resolve_runtime.py --probe` or perform the same cached-runtime import checks.
 2. If no cached runtime is ready and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
 3. For simple STS `.dat` reading or diagnostic plots, use the quick card `references/task-cards/sts-dat-quick.md`.
-4. Use `scripts/pysidam_agent/read_file.py` for compact file summaries, `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures, and `scripts/pysidam_agent/fit_gap.py` with `references/task-cards/gap-fit-quick.md` for PySIDAM-backed superconducting gap fitting.
+4. Use `scripts/pysidam_agent/read_file.py --quick` for compact file summaries, `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures, `scripts/pysidam_agent/fit_gap.py` with `references/task-cards/gap-fit-quick.md` for PySIDAM-backed superconducting gap fitting, and `scripts/pysidam_agent/bragg_phase.py` for Bragg q selection or lock-in phase runs.
 5. For deeper tasks, classify the request using `references/workflow.md` and query `references/pysidam-capability-index.json` with `scripts/pysidam_agent/capabilities.py`.
 6. Before quantitative fitting, map extraction, phase claims, or scientific conclusions, read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
 7. If the agent chooses a fitting interval, q vector/q window/filter sigma, or multipeak peak count, use `references/approval-gates.md` and stop for user approval before formal execution.
@@ -94,12 +94,15 @@ The bridge scripts under `scripts/pysidam_agent/` are thin, reusable adapters. T
 
 ```bash
 python3 scripts/pysidam_agent/capabilities.py --domain core_io
-python3 scripts/pysidam_agent/read_file.py data/example.dat --output-json outputs/read_summary.json
+python3 scripts/pysidam_agent/read_file.py --quick data/example.dat --output-json outputs/read_summary.json
 python3 scripts/pysidam_agent/plot_spectrum.py data/example.dat --output outputs/spectrum.png --summary-json outputs/spectrum.json
 python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wave" --output-dir outputs/gap_fit
+python3 scripts/pysidam_agent/bragg_phase.py policy
+python3 scripts/pysidam_agent/bragg_phase.py inspect-roi data/topo.sxm --roi -0.5 0.5 2.0 3.0 --output-json outputs/q_roi.json
+python3 scripts/pysidam_agent/bragg_phase.py lockin-from-decision --decision approvals/approval_decision.json --raw-root raw_data --output-dir outputs/bragg_phase
 ```
 
-The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For gap fitting, the bridge delegates to the bundled headless `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`, which uses PySIDAM core model definitions without importing UI-wrapped fitter modules.
+The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For `.3ds` files, `read_file.py` defaults to divider `1.0` because Nanonis bias axes are treated as already divider-corrected by the experiment software; apply extra scaling only when the user explicitly requests it. For gap fitting, the bridge delegates to the bundled headless `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`, which uses PySIDAM core model definitions without importing UI-wrapped fitter modules. For Bragg phase work, `bragg_phase.py policy` enforces the user-q/ROI-first decision point, `inspect-roi` handles user-marked peak regions, and `lockin-from-decision` runs approved phase extraction.
 
 ## Approval Gates
 
@@ -171,4 +174,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v0.2.3`. Release notes live in `RELEASE_NOTES_v0.2.3.md`.
+The current release line is `v0.2.4`. Release notes live in `RELEASE_NOTES_v0.2.4.md`.

@@ -14,6 +14,8 @@ Do not create separate approval gates for routine loading, unit conversion, plot
 
 If the user already supplied exact values, record the gate as `user_preapproved` and keep the user-provided values in the report. If the user supplied only a qualitative direction and the agent chooses exact values, create a normal `pending_approval` proposal.
 
+For Bragg or lock-in phase analysis, if the user asks only to "do phase analysis" and gives no q vector, peak, or ROI, ask whether they want to specify the peak/ROI or allow agent search before running peak finding. Human-specified q vectors or ROIs take priority over agent search. Use `scripts/pysidam_agent/bragg_phase.py policy` to enforce this decision point and `inspect-roi` for user-marked peak regions.
+
 ## Required Workflow
 
 1. Analyze enough of the data to make a recommendation without executing the gated downstream result.
@@ -116,7 +118,7 @@ python3 scripts/approval_gate.py validate-report --report report.json --decision
 
 For `fit_window`, show representative spectra, the proposed interval or peak-search windows, excluded regions, and fit sensitivity if available.
 
-For `q_selection`, show the FFT or relevant q-space map, proposed q points or windows, q-axis units, pixel/q resolution, sigma, and nearby alternatives.
+For `q_selection`, show the FFT or relevant q-space map, proposed q points or windows, q-axis units, pixel/q resolution, sigma, and nearby alternatives. For user-provided ROIs, restrict peak refinement to that ROI unless the user approves a broader search.
 
 For `peak_count`, show representative spectra or linecut slices, candidate residual or information-criterion evidence if available, and the peak assignment rule.
 
