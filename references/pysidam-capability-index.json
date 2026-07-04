@@ -15,7 +15,9 @@
     "scripts/pysidam_agent/read_file.py",
     "scripts/pysidam_agent/plot_spectrum.py",
     "scripts/pysidam_agent/fit_gap.py",
-    "scripts/pysidam_agent/bragg_phase.py"
+    "scripts/pysidam_agent/bragg_phase.py",
+    "scripts/pysidam_agent/phase_lockin.py",
+    "scripts/pysidam_agent/atom_ai.py"
   ],
   "domains": [
     {
@@ -104,7 +106,18 @@
           "module": "pysidam.topography.topography_ai_identificator",
           "api": "_get_atom_detector_cls",
           "status": "OPTIONAL_DEP",
-          "requires": ["Atom_Identificator_core"]
+          "requires": ["Atom_Identificator_core"],
+          "bridge": "scripts/pysidam_agent/atom_ai.py",
+          "notes": "Use Atom_Identificator_core for detection; use the bridge for resize_ratio scale checks, square-lattice QC, and human wipe regions."
+        },
+        {
+          "name": "agent_atom_ai_scale_qc_wipe",
+          "module": "pysidam_agent_core.atom_ai",
+          "api": "scale_recommendation, lattice_qc, apply_wipe_regions",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy"],
+          "bridge": "scripts/pysidam_agent/atom_ai.py",
+          "notes": "Detector-adjacent helper for AI atom-recognition parameter tuning, post-detection square-lattice QC, and DW/dirty/defect exclusion regions."
         },
         {
           "name": "topography_display_filter",
@@ -205,7 +218,16 @@
           "module": "pysidam.qpi_analysis.qpi_phase_analysis, pysidam.qpi_analysis.qpi_real_phase",
           "api": "lockin_phase_extraction, lockin_phase, _refine_peak_near, _unwrap_phase_2d",
           "status": "GUI_WRAPPED_EXTRACT",
-          "bridge": "scripts/pysidam_agent/bragg_phase.py"
+          "bridge": "scripts/pysidam_agent/phase_lockin.py"
+        },
+        {
+          "name": "clean_2d_phase_lockin_bridge",
+          "module": "pysidam_agent_core.phase_lockin",
+          "api": "q_cycles_to_pysidam_px_yx, run_pysidam_lockin; CLI run",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy", "pysidam.qpi_analysis.qpi_phase_analysis"],
+          "bridge": "scripts/pysidam_agent/phase_lockin.py",
+          "notes": "Default clean pipeline for 2D lock-in extraction. Accepts SXM, 3DS topography, NPY, NPZ, CSV/TSV/TXT maps and emits report.json, phase_lockin_maps.npz, and phase_lockin_stats.csv."
         },
         {
           "name": "bragg_phase_bridge",

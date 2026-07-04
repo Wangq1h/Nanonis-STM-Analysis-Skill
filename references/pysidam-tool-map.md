@@ -48,7 +48,7 @@ Prefer pure or mostly headless pieces:
 - `pysidam.topography.topography_correction.LFDriftCorrector`: FFT peak refinement, `get_q_vector`, `lockin_phase`, `compute_drift_field`, `warp_image`.
 - `pysidam.topography.topography_ai_identificator._get_atom_detector_cls`: lazy loader for `Atom_Identificator_core.AtomDetector`.
 
-For AI atom detection, call `AtomDetector` directly when available. Record detector config such as `patch_size`, `stride`, `resize_ratio`, `gaussian_blur_ksize`, `clip_percentile`, `min_dist`, `prob_threshold`, `force_cpu`, and `base_channels`.
+For AI atom detection, call `AtomDetector` directly when available. Use `scripts/pysidam_agent/atom_ai.py recommend-scale` before detection, then `lattice-qc` after detection. Record detector config such as `patch_size`, `stride`, `resize_ratio`, `gaussian_blur_ksize`, `clip_percentile`, `min_dist`, `prob_threshold`, `force_cpu`, and `base_channels`. For human-marked DW, dirty, highlighted, or defect regions, use `wipe-regions` to mark `excluded_<label>` without changing AI labels outside the region.
 
 Record raw map, corrected map, q vectors, displacement fields, scan size, pixel size, and every flip/transpose/warp.
 
@@ -98,6 +98,8 @@ Use:
 - `pysidam.qpi_analysis.qpi_symmetry`: `apply_affine_to_stack`, `build_affine_from_bragg_vectors`, `estimate_lf_displacement`, `apply_lf_displacement_to_stack`, `symmetrize_qpi`, `_compute_fft_volume`.
 
 Save window type, DC mask, FFT display scale, q vectors, complex fields, amplitude, phase, masks, and threshold sweeps. Keep `+q`, `-q`, `qx`, and `qy` diagnostics separate until a justified merge.
+
+For routine 2D lock-in extraction, use `scripts/pysidam_agent/phase_lockin.py run`. It accepts `.sxm`, `.3ds` topography, `.npy`, `.npz`, and numeric table maps, calls `pysidam.qpi_analysis.qpi_phase_analysis.lockin_phase_extraction`, and writes a standard data package for downstream agents. Do not reimplement lock-in demodulation in task-local scripts unless this PySIDAM route is blocked and the user explicitly approves a fallback.
 
 ## SJTM
 

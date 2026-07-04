@@ -33,7 +33,10 @@ Typical sequence:
 4. Identify Bragg peaks and refine peak positions when needed.
 5. For drift correction, extract lock-in phases from two non-collinear lattice vectors and compute displacement fields.
 6. Detect atom or lattice-site coordinates only after the topography frame is stable.
-7. Export corrected maps, displacement fields, site coordinates, and diagnostics.
+7. For AI atom recognition, run `scripts/pysidam_agent/atom_ai.py recommend-scale` before detection, record `resize_ratio` and related detector parameters, then run `lattice-qc` on the output atom table. A 20 nm, 512 px topography with `resize_ratio=1.5` has 0.0260417 nm per inference pixel and a 0.3515625 nm nearest-neighbor spacing corresponds to 13.5 inference pixels; nearby scales are the first tuning range.
+8. If atom sites do not form an orderly square lattice, adjust detector parameters such as `resize_ratio`, `min_dist`, and `prob_threshold`, then rerun detection. Do not substitute a manual review/calibration relabeling pass for failed AI recognition.
+9. If the user marks DW, dirty, highlighted, or defect regions, run `scripts/pysidam_agent/atom_ai.py wipe-regions` and preserve AI labels outside those excluded regions.
+10. Export corrected maps, displacement fields, site coordinates, exclusion masks or labels, and diagnostics.
 
 ## 4. Spectroscopy Processing
 
@@ -61,7 +64,7 @@ Typical sequence:
 4. Mask the DC component when appropriate.
 5. Select or refine target q points as a proposal, with FFT evidence and uncertainty.
 6. Stop at a `q_selection` approval gate before any q-vector, q-window, or filter-sigma-dependent extraction.
-7. Extract complex lock-in fields after approval.
+7. Extract complex lock-in fields after approval with `scripts/pysidam_agent/phase_lockin.py run` or `bragg_phase.py lockin-from-decision`; the report must name `pysidam.qpi_analysis.qpi_phase_analysis.lockin_phase_extraction` as the engine.
 8. Save amplitude, phase, complex field, and masks.
 9. Treat `+q`, `-q`, `qx`, and `qy` separately before any merge.
 

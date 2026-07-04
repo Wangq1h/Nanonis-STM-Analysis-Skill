@@ -38,6 +38,7 @@ Record:
 - Detrending or mean subtraction.
 - Window function.
 - DC mask.
+- Lock-in engine, normally `pysidam.qpi_analysis.qpi_phase_analysis.lockin_phase_extraction`.
 - q selection and refinement.
 - Complex lock-in field.
 - Amplitude field.
@@ -45,7 +46,20 @@ Record:
 - Amplitude masks.
 - Threshold sweeps.
 
-Do not make phase conclusions from real-IFFT images alone. Treat `+q`, `-q`, `qx`, and `qy` separately before merging.
+Do not make phase conclusions from real-IFFT images alone. Treat `+q`, `-q`, `qx`, and `qy` separately before merging. For formal 2D lock-in outputs, use `scripts/pysidam_agent/phase_lockin.py run` or `bragg_phase.py lockin-from-decision`, then make downstream strain, phase-jump, or correlation analyses consume the resulting `phase_lockin_maps.npz` rather than recomputing lock-in locally.
+
+## AI Atom Detection Gates
+
+For AI atom/site recognition, record:
+
+- Detector source, preferably `Atom_Identificator_core.AtomDetector`.
+- Input topography channel, scan size, native pixel size, and inference pixel size.
+- Detector parameters including `resize_ratio`, `min_dist`, `prob_threshold`, `patch_size`, `stride`, `gaussian_blur_ksize`, and `clip_percentile`.
+- Scale check from `scripts/pysidam_agent/atom_ai.py recommend-scale`; for a 20 nm, 512 px map, `resize_ratio=1.5` gives 0.0260417 nm per inference pixel and a 0.3515625 nm spacing gives 13.5 inference pixels.
+- `scripts/pysidam_agent/atom_ai.py lattice-qc` output: nearest-neighbor median, spread, duplicate-like fraction, vacancy-like fraction, fourfold order, and neighbor-count fraction.
+- Human-requested wipe regions from `wipe-regions`, including region geometry, label, excluded count, and the output class column.
+
+Report AI atom sites only when the post-detection lattice is an orderly square lattice with few missing or duplicate sites. If QC fails, tune detector parameters and rerun AI detection. Human-marked DW, dirty, highlighted, or defect regions should be excluded with `excluded_<label>` while preserving AI A/B labels outside those regions.
 
 ## Approval Gates
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added reusable AI atom-recognition helpers in `pysidam_agent_core.atom_ai` and `scripts/pysidam_agent/atom_ai.py`.
+- Added scale guidance for detector `resize_ratio`, including the 20 nm / 512 px / 1.5x reference scale of 0.0260417 nm per inference pixel and 13.5 inference pixels per 0.3515625 nm atom spacing.
+- Added post-detection square-lattice QC so failed AI atom recognition triggers parameter tuning and rerun instead of manual review/calibration relabeling.
+- Added human-marked DW/dirty/defect wipe support that marks `excluded_<label>` while preserving AI A/B labels outside the region.
+- Added `scripts/pysidam_agent/phase_lockin.py` and `pysidam_agent_core.phase_lockin` as the clean PySIDAM 2D lock-in pipeline for phase analysis.
+- Added a hard rule that Bragg/QPI phase extraction must record `pysidam.qpi_analysis.qpi_phase_analysis.lockin_phase_extraction` as the lock-in engine instead of reimplementing demodulation in task-local scripts.
+
 ## v0.2.4 - 2026-07-02
 
 - Added reusable Bragg/q-selection and lock-in bridge tooling through `scripts/pysidam_agent/bragg_phase.py`.
