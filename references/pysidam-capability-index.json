@@ -17,7 +17,8 @@
     "scripts/pysidam_agent/fit_gap.py",
     "scripts/pysidam_agent/bragg_phase.py",
     "scripts/pysidam_agent/phase_lockin.py",
-    "scripts/pysidam_agent/atom_ai.py"
+    "scripts/pysidam_agent/atom_ai.py",
+    "scripts/pysidam_agent/domain_wall.py"
   ],
   "domains": [
     {
@@ -118,6 +119,15 @@
           "requires": ["numpy"],
           "bridge": "scripts/pysidam_agent/atom_ai.py",
           "notes": "Detector-adjacent helper for AI atom-recognition parameter tuning, post-detection square-lattice QC, and DW/dirty/defect exclusion regions."
+        },
+        {
+          "name": "domain_wall_mask_stats_bridge",
+          "module": "pysidam_agent_core.domain_wall",
+          "api": "domain_wall_policy, build_domain_wall_masks, region_stats; CLI policy, build-masks, stats",
+          "status": "HEADLESS_READY",
+          "requires": ["numpy", "scipy"],
+          "bridge": "scripts/pysidam_agent/domain_wall.py",
+          "notes": "Reusable Domain Wall region package. Human-marked regions take priority; outputs broad/on/near/away masks and DW/away map statistics for topography, spectroscopy, lock-in phase, and atom-wipe workflows."
         },
         {
           "name": "topography_display_filter",

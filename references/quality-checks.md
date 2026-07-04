@@ -61,6 +61,19 @@ For AI atom/site recognition, record:
 
 Report AI atom sites only when the post-detection lattice is an orderly square lattice with few missing or duplicate sites. If QC fails, tune detector parameters and rerun AI detection. Human-marked DW, dirty, highlighted, or defect regions should be excluded with `excluded_<label>` while preserving AI A/B labels outside those regions.
 
+## Domain Wall Gates
+
+For Domain Wall analysis or region comparison, record:
+
+- Whether DW geometry came from human-marked regions, reused masks, or an explicitly allowed agent proposal.
+- Region geometry in nm and the coordinate frame.
+- `domain_wall_masks.npz` or equivalent saved masks with `broad_dw_mask`, `on_dw_mask`, `near_dw_mask`, and `away_mask`.
+- Counts and area fractions for broad DW, on-DW, near-DW, and away regions.
+- Near-DW width, edge exclusion, and any refinement map/percentile/mode.
+- DW/away mean or median ratios for each reported topography, spectroscopy, phase, amplitude, or gap metric.
+
+Keep broad DW/context regions separate from refined high-Z or high-signal `on_dw_mask`. Do not let pixels inside the broad DW strip become part of `away_mask` just because they fail the refinement threshold.
+
 ## Approval Gates
 
 Use an approval gate when the agent must choose a scientifically sensitive parameter before execution:

@@ -33,6 +33,7 @@ REQUIRED_FILES = [
     "pysidam_agent_core/bragg_phase.py",
     "pysidam_agent_core/phase_lockin.py",
     "pysidam_agent_core/atom_ai.py",
+    "pysidam_agent_core/domain_wall.py",
     "scripts/approval_gate.py",
     "scripts/probe_runtime.py",
     "scripts/resolve_runtime.py",
@@ -47,6 +48,7 @@ REQUIRED_FILES = [
     "scripts/pysidam_agent/bragg_phase.py",
     "scripts/pysidam_agent/phase_lockin.py",
     "scripts/pysidam_agent/atom_ai.py",
+    "scripts/pysidam_agent/domain_wall.py",
     "runtime/constraints.txt",
     "runtime/requirements-core.txt",
     "runtime/requirements-nanonis.txt",
@@ -70,6 +72,8 @@ REQUIRED_FILES = [
     "assets/approval-gate-template.html",
     "tests/test_approval_gate.py",
     "tests/test_atom_ai_core.py",
+    "tests/test_domain_wall_core.py",
+    "tests/test_domain_wall_cli.py",
     "tests/test_phase_lockin_core.py",
     "tests/test_phase_lockin_cli.py",
 ]
@@ -90,6 +94,7 @@ REQUIRED_TOKENS = {
         "scripts/pysidam_agent/bragg_phase.py",
         "scripts/pysidam_agent/phase_lockin.py",
         "scripts/pysidam_agent/atom_ai.py",
+        "scripts/pysidam_agent/domain_wall.py",
         "references/task-cards/sts-dat-quick.md",
         "references/task-cards/gap-fit-quick.md",
         "references/pysidam-capability-index.json",
@@ -124,6 +129,7 @@ REQUIRED_TOKENS = {
         "resize_ratio",
         "lattice-qc",
         "wipe-regions",
+        "domain_wall.py",
     ],
     "references/runtime-bootstrap.md": [
         "nanonispy",
@@ -213,6 +219,7 @@ REQUIRED_TOKENS = {
         "pysidam_agent",
         "phase_lockin.py",
         "atom_ai.py",
+        "domain_wall.py",
         "capability index",
     ],
     "pysidam_agent_core/bragg_phase.py": [
@@ -233,6 +240,13 @@ REQUIRED_TOKENS = {
         "resize_ratio",
         "fourfold_order",
     ],
+    "pysidam_agent_core/domain_wall.py": [
+        "domain_wall_policy",
+        "build_domain_wall_masks",
+        "region_stats",
+        "broad_dw_mask",
+        "away_mask",
+    ],
     "scripts/pysidam_agent/bragg_phase.py": [
         "policy",
         "inspect-roi",
@@ -250,6 +264,13 @@ REQUIRED_TOKENS = {
         "wipe-regions",
         "pysidam_agent_core.atom_ai",
     ],
+    "scripts/pysidam_agent/domain_wall.py": [
+        "policy",
+        "build-masks",
+        "stats",
+        "domain_wall_masks.npz",
+        "pysidam_agent_core.domain_wall",
+    ],
     "references/pysidam-capability-index.json": [
         "\"schema_version\"",
         "\"pysidam_commit\"",
@@ -258,6 +279,7 @@ REQUIRED_TOKENS = {
         "\"core_io\"",
         "\"agent_atom_ai_scale_qc_wipe\"",
         "\"clean_2d_phase_lockin_bridge\"",
+        "\"domain_wall_mask_stats_bridge\"",
         "\"qpi_lockin\"",
         "\"sjtm\"",
         "\"deconvolution\"",
@@ -325,7 +347,12 @@ REQUIRED_TOKENS = {
         "read_file.py --quick",
         "user-specified q",
     ],
-    "pysidam_agent_core/__init__.py": ["fit_gap_model_guarded", "scale_recommendation", "run_pysidam_lockin"],
+    "pysidam_agent_core/__init__.py": [
+        "fit_gap_model_guarded",
+        "scale_recommendation",
+        "run_pysidam_lockin",
+        "build_domain_wall_masks",
+    ],
     "pysidam_agent_core/approval.py": [
         "GATE_TYPES",
         "fit_window",
@@ -442,6 +469,15 @@ REQUIRED_TOKENS = {
         "test_resize_1p5_matches_fts_spin_pixel_scale",
         "test_square_lattice_qc_passes_orderly_grid",
         "test_apply_wipe_regions_marks_dw_band_and_dirty_spot",
+    ],
+    "tests/test_domain_wall_core.py": [
+        "test_policy_asks_before_agent_dw_search_without_user_regions",
+        "test_build_masks_from_user_x_band_with_near_and_away_regions",
+        "test_refined_on_dw_keeps_broad_strip_out_of_away_region",
+    ],
+    "tests/test_domain_wall_cli.py": [
+        "test_load_numeric_map_reads_npy_and_npz",
+        "test_write_mask_outputs_saves_npz_and_report",
     ],
     "tests/test_phase_lockin_core.py": [
         "test_q_cycles_convert_to_pysidam_absolute_pixels",

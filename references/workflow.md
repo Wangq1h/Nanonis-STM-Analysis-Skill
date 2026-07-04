@@ -35,8 +35,9 @@ Typical sequence:
 6. Detect atom or lattice-site coordinates only after the topography frame is stable.
 7. For AI atom recognition, run `scripts/pysidam_agent/atom_ai.py recommend-scale` before detection, record `resize_ratio` and related detector parameters, then run `lattice-qc` on the output atom table. A 20 nm, 512 px topography with `resize_ratio=1.5` has 0.0260417 nm per inference pixel and a 0.3515625 nm nearest-neighbor spacing corresponds to 13.5 inference pixels; nearby scales are the first tuning range.
 8. If atom sites do not form an orderly square lattice, adjust detector parameters such as `resize_ratio`, `min_dist`, and `prob_threshold`, then rerun detection. Do not substitute a manual review/calibration relabeling pass for failed AI recognition.
-9. If the user marks DW, dirty, highlighted, or defect regions, run `scripts/pysidam_agent/atom_ai.py wipe-regions` and preserve AI labels outside those excluded regions.
-10. Export corrected maps, displacement fields, site coordinates, exclusion masks or labels, and diagnostics.
+9. If the user marks DW, dirty, highlighted, or defect regions, first run `scripts/pysidam_agent/domain_wall.py policy` and save reusable DW geometry or masks with `build-masks` when map comparisons are needed.
+10. For atom tables, run `scripts/pysidam_agent/atom_ai.py wipe-regions` from the human-marked regions and preserve AI labels outside those excluded regions.
+11. Export corrected maps, displacement fields, site coordinates, exclusion masks or labels, and diagnostics.
 
 ## 4. Spectroscopy Processing
 
@@ -71,6 +72,8 @@ Typical sequence:
 ## 7. Cross-Observable Analysis
 
 Compare topography, dI/dV, gap maps, SJTM maps, atom sites, displacement, strain, and phase fields only after confirming a common coordinate frame. If alignment is uncertain, report map-level observations and avoid site-level claims.
+
+For Domain Wall comparisons, keep the user-marked broad DW/context geometry separate from any refined `on_dw_mask` such as high-Z pixels inside the broad strip. Use `scripts/pysidam_agent/domain_wall.py build-masks` to save `domain_wall_masks.npz`, then reuse `stats` for topography, spectroscopy-derived maps, and lock-in phase/amplitude maps. The `away_mask` must exclude the full broad DW region, not only the refined high-signal pixels.
 
 ## 8. Evidence Package
 

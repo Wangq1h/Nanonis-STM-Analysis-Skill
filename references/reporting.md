@@ -59,3 +59,5 @@ Separate measured outputs from claims:
 If a quality gate fails, state the limitation in `warnings` and weaken the interpretation.
 
 For gated workflows, the report must link the approval gate decision. Do not report final fit-window, q-selection, filter-sigma, or peak-count dependent outputs as approved unless the `approval.decision_path` points to a valid decision artifact or the user explicitly provided `user_preapproved` parameters.
+
+For Domain Wall claims, include the DW region source, saved mask package path, broad/on/near/away counts, refinement parameters, and DW/away ratios in `parameters`, `quality`, or `outputs`.

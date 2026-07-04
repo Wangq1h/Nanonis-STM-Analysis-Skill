@@ -50,6 +50,8 @@ Prefer pure or mostly headless pieces:
 
 For AI atom detection, call `AtomDetector` directly when available. Use `scripts/pysidam_agent/atom_ai.py recommend-scale` before detection, then `lattice-qc` after detection. Record detector config such as `patch_size`, `stride`, `resize_ratio`, `gaussian_blur_ksize`, `clip_percentile`, `min_dist`, `prob_threshold`, `force_cpu`, and `base_channels`. For human-marked DW, dirty, highlighted, or defect regions, use `wipe-regions` to mark `excluded_<label>` without changing AI labels outside the region.
 
+For Domain Wall map comparisons, use `scripts/pysidam_agent/domain_wall.py policy` before region-dependent analysis. Use `build-masks` to save broad/on/near/away masks from human-marked x/y bands, rectangles, circles, polygons, or line strips, and use `stats` to compute DW/away ratios for topography, spectroscopy, lock-in phase, or gap maps. Keep the broad DW strip out of `away_mask` even when `on_dw_mask` is refined by high-Z or high-signal thresholds.
+
 Record raw map, corrected map, q vectors, displacement fields, scan size, pixel size, and every flip/transpose/warp.
 
 ## Spectroscopy And Fitting

@@ -18,6 +18,7 @@ This map is the human-readable companion to the machine-readable capability inde
 - Superconducting gap fitting: use `scripts/pysidam_agent/fit_gap.py`, the bundled `pysidam_agent_core` fitter, and the gap fit quick card.
 - Bragg q selection and lock-in phase: use `scripts/pysidam_agent/bragg_phase.py policy` and `inspect-roi`; run clean 2D lock-in with `scripts/pysidam_agent/phase_lockin.py run` or approved SXM batches with `bragg_phase.py lockin-from-decision`.
 - AI atom detection scale/QC/wipe support: use `scripts/pysidam_agent/atom_ai.py recommend-scale`, `lattice-qc`, and `wipe-regions` around `Atom_Identificator_core.AtomDetector`.
+- Domain Wall masks and DW/away map statistics: use `scripts/pysidam_agent/domain_wall.py policy`, `build-masks`, and `stats`; reuse the saved mask package across topography, spectroscopy, phase, and atom-wipe workflows.
 - Capability lookup: use `scripts/pysidam_agent/capabilities.py --json`, or filter with `--domain` and `--status`.
 
 ## Domain Routing
@@ -35,4 +36,4 @@ This map is the human-readable companion to the machine-readable capability inde
 
 When a domain is `GUI_WRAPPED_EXTRACT`, prefer documenting the exact PySIDAM function/class and required inputs over instantiating windows. Add a new `pysidam_agent` adapter when a task repeats or when speed/token use matters.
 
-`pysidam_agent_core` is the preferred location for repeated headless algorithms that were originally embedded in PySIDAM UI modules. Superconducting gap fitting, Bragg phase routing, and AI atom-detection scale/QC/wipe helpers now live there instead of task-local scripts.
+`pysidam_agent_core` is the preferred location for repeated headless algorithms that were originally embedded in PySIDAM UI modules or repeated agent workflows. Superconducting gap fitting, Bragg phase routing, AI atom-detection scale/QC/wipe helpers, and Domain Wall mask/stat helpers now live there instead of task-local scripts.
