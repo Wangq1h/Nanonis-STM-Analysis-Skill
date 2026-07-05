@@ -4,6 +4,10 @@ This repository contains a portable agent skill for scanning tunneling microscop
 
 The package is documentation-first, with small portable helper scripts for runtime probing, safe dependency bootstrapping, installed-skill syncing, and an agent bridge over PySIDAM. It does not contain private experimental data or dataset-specific scripts.
 
+## Tutorials
+
+- [Agent-guided STM Data Analysis](docs/tutorials/agent-guided-stm-data-analysis.md): a practical workflow for using an agent to confirm data contracts, gate sensitive parameters, run PySIDAM-backed analyses, and save reproducible evidence packages.
+
 ## Supported Work
 
 - STM topography processing, background correction, FFT inspection, Bragg peak selection, low-frequency drift correction, and atom or lattice-site detection.
