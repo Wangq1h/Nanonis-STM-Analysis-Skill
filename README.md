@@ -50,6 +50,26 @@ Seven minutes later, the agent comes back with a compact, auditable result:
 
 That is the intended feel of this skill: not a black box that says “done”, but a careful lab assistant that shows what it read, what it changed, which choices stayed auditable, and where every output lives.
 
+## Approval Gates in Action
+
+The same pattern matters even more for Bragg/QPI work. A vague request such as “the red-box qB peak looks more like a Bragg peak” is not treated as permission to run a phase analysis. The agent first turns it into a `q_selection` gate: propose the ROI-derived q vector, show the FFT evidence, list the risks, and wait for the user to approve or modify the scientific parameters.
+
+<p align="center">
+  <img src="assets/scenario-qb-red-peak-correction.png" alt="q-vector approval workflow for Bragg lock-in" width="920">
+</p>
+
+In this example, the user can confirm the choice in several natural ways: accept the red-ROI local maximum, type an explicit q vector, or adjust the lock-in filter. Only after that does the agent write `approval_decision.json` and continue with the qB lock-in outputs.
+
+## Phase Hygiene in Action
+
+Phase maps have their own traps. When a continuous display profile appears to jump by nearly `2π`, the skill pushes the agent to separate display artifacts from physical interpretation: branch-cut bins can be omitted from the plotted profile, while the underlying phase data and left/right domain statistics remain auditable.
+
+<p align="center">
+  <img src="assets/scenario-phase-branch-cut.png" alt="Branch-cut-aware Bragg phase display" width="920">
+</p>
+
+That distinction is deliberate. The agent may improve the figure so it does not imply a false spike, but it should not turn a wrapped-phase branch cut into a physical phase-jump claim.
+
 ## What It Helps Agents Do
 
 - **Read raw files safely**: inspect `.3ds`, `.sxm`, `.dat`, `.ibw`, `.csv`, `.tsv`, and text spectra without copying private data into the skill repository.
