@@ -10,7 +10,9 @@ This repository contains a portable agent skill for scanning tunneling microscop
 
 ## English
 
-### A real run, sanitized
+### STS Figure Extraction in Action
+
+![STS figure extraction demo](assets/demo-sts-figure-extraction.gif)
 
 > **Researcher:**
 > “Look at `raw_data/`. The files `001-005.dat` are superconducting spectra taken at different temperatures. The temperatures should be in the headers. Use the STM skill, read the data, and make a clean figure that can go into a paper.”
@@ -25,7 +27,7 @@ Seven minutes later, the agent comes back with a compact, auditable result:
 - saved `processed_spectra.csv`, `paper_figure_provenance.json`, and the rerunnable script;
 - reran the script from scratch and verified all outputs were nonempty.
 
-That is the intended feel of this skill: not a black box that says “done”, but a careful lab assistant that tells you what it read, what it changed, what it refused to guess, and where every output lives.
+That is the intended feel of this skill: not a black box that says “done”, but a careful lab assistant that shows what it read, what it changed, which choices stayed auditable, and where every output lives.
 
 ### What it helps agents do
 
@@ -94,13 +96,9 @@ python3 scripts/pysidam_agent/domain_wall.py build-masks --shape-yx 128 128 --sc
 - [Approval gates](references/approval-gates.md)
 - [PySIDAM capability map](references/pysidam-capability-map.md)
 
-### Codex Installation
+### Skill Installation
 
-Copy or synchronize this repository root to:
-
-```text
-~/.codex/skills/stm-sjtm-data-processing/
-```
+Copy or synchronize this repository root into the skill directory used by your agent runtime.
 
 For local development, prefer:
 
@@ -126,14 +124,14 @@ PASS: stm-sjtm-data-processing package is structurally valid
 - Runtime probe script: `scripts/probe_runtime.py`
 - Quick task cards: `references/task-cards/sts-dat-quick.md`, `references/task-cards/gap-fit-quick.md`
 - Capability index: `references/pysidam-capability-index.json`
-- Non-Codex Agent Usage: read this README first, then load the workflow, data-contract, and domain references needed for the task.
+- Other Agent Runtimes: read this README first, then load the workflow, data-contract, and domain references needed for the task.
 - GitHub Release: release notes live in `RELEASE_NOTES_v*.md`; the current release line follows the latest versioned release note.
 
 ---
 
 ## 中文
 
-### 一个脱密后的真实使用片段
+### STS 论文图提取场景
 
 > **研究者：**
 > “看一下 `raw_data/`。`001-005.dat` 是不同温度下测的超导谱，温度应该写在 header 里。使用 STM skill 读取数据，并画一张可以放进论文的高清图。”
@@ -148,7 +146,7 @@ PASS: stm-sjtm-data-processing package is structurally valid
 - 同时保存 `processed_spectra.csv`、`paper_figure_provenance.json` 和可复跑脚本；
 - fresh rerun 验证通过，输出文件非空。
 
-这就是这个 skill 希望提供的体验：它不是一个直接替你下结论的黑盒，而是一个谨慎的实验助理。它会告诉你读了什么、改了什么、哪些参数不能擅自决定、图和数据保存在哪里，以及这次结果怎样复现。
+这就是这个 skill 希望提供的体验：它不是一个直接替你下结论的黑盒，而是一个谨慎的实验助理。它会告诉你读了什么、改了什么、哪些选择保留为可审计参数、图和数据保存在哪里，以及这次结果怎样复现。
 
 ### 它能帮 agent 做什么
 
@@ -217,13 +215,9 @@ python3 scripts/pysidam_agent/domain_wall.py build-masks --shape-yx 128 128 --sc
 - [审批门禁](references/approval-gates.md)
 - [PySIDAM 能力图](references/pysidam-capability-map.md)
 
-### Codex 安装
+### Skill 安装
 
-复制或同步本仓库到：
-
-```text
-~/.codex/skills/stm-sjtm-data-processing/
-```
+复制或同步本仓库到你的 agent runtime 所使用的 skill 目录。
 
 本地开发时推荐：
 

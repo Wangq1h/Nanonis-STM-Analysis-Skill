@@ -82,8 +82,8 @@ REQUIRED_TOKENS = {
     "README.md": [
         "STM/SJTM Data Processing Agent Skill",
         "Quick Start",
-        "Codex Installation",
-        "Non-Codex Agent Usage",
+        "Skill Installation",
+        "Other Agent Runtimes",
         "GitHub Release",
         "scripts/probe_runtime.py",
         "scripts/resolve_runtime.py",
