@@ -1,139 +1,100 @@
 # STM/SJTM Data Processing Agent Skill
 
-This repository contains a portable agent skill for scanning tunneling microscopy and superconducting-tip STM data processing. It helps agents choose workflows, preserve data contracts, map tasks to `pysidam` when available, apply fitting recipes, enforce quality and approval gates, and produce reproducible evidence packages.
+**From raw Nanonis files to paper-ready figures, with an agent that keeps the data contract, asks before sensitive choices, and leaves a reproducible evidence trail.**
 
-The package is documentation-first, with small portable helper scripts for runtime probing, safe dependency bootstrapping, installed-skill syncing, and an agent bridge over PySIDAM. It does not contain private experimental data or dataset-specific scripts.
+[English](#english) | [中文](#中文) | [Tutorial](docs/tutorials/agent-guided-stm-data-analysis.md) | [Wiki](https://github.com/Wangq1h/Nanonis-STM-Analysis-Skill/wiki)
 
-## Tutorials
+This repository contains a portable agent skill for scanning tunneling microscopy (STM), scanning tunneling spectroscopy (STS), and superconducting-tip STM (SJTM) data processing. It helps agents route work to PySIDAM where available, confirm units and axes, enforce approval gates for scientifically sensitive choices, and package results as figures, tables, scripts, and machine-readable provenance.
 
-- [Agent-guided STM Data Analysis](docs/tutorials/agent-guided-stm-data-analysis.md): a practical workflow for using an agent to confirm data contracts, gate sensitive parameters, run PySIDAM-backed analyses, and save reproducible evidence packages.
+---
 
-## Supported Work
+## English
 
-- STM topography processing, background correction, FFT inspection, Bragg peak selection, low-frequency drift correction, and atom or lattice-site detection.
-- STS and grid spectroscopy workflows, including gap extraction, superconducting gap fitting, multipeak fitting, ZBP handling, and batch gap maps.
-- SJTM workflows including Josephson-current maps, zero-bias conductance or superfluid proxies, gap-height maps, Z-ratio maps, and SIS/NIS deconvolution guidance.
-- Fourier, QPI, and complex lock-in phase analysis with amplitude-gated statistics.
-- Cross-observable comparison across topography, spectroscopy, gap maps, atom sites, strain, and phase fields.
-- Standardized user approval gates for agent-selected fit windows, FFT/q-vector and filter-sigma choices, and multipeak peak counts.
-- Reproducible reporting with machine-readable outputs and diagnostic figures.
+### A real run, sanitized
 
-## Quick Start
+> **Researcher:**
+> “Look at `raw_data/`. The files `001-005.dat` are superconducting spectra taken at different temperatures. The temperatures should be in the headers. Use the STM skill, read the data, and make a clean figure that can go into a paper.”
 
-For any STM/SJTM task, an agent should:
+Seven minutes later, the agent comes back with a compact, auditable result:
 
-1. Run `python3 scripts/resolve_runtime.py --probe` or perform the same cached-runtime import checks.
-2. If no cached runtime is ready and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
-3. For simple STS `.dat` reading or diagnostic plots, use the quick card `references/task-cards/sts-dat-quick.md`.
-4. Use `scripts/pysidam_agent/read_file.py --quick` for compact file summaries, `scripts/pysidam_agent/plot_spectrum.py` for 1D spectrum figures, `scripts/pysidam_agent/fit_gap.py` with `references/task-cards/gap-fit-quick.md` for PySIDAM-backed superconducting gap fitting, `scripts/pysidam_agent/bragg_phase.py` for Bragg q selection or lock-in phase runs, `scripts/pysidam_agent/atom_ai.py` for AI atom-detection scale checks, lattice QC, and human-marked region exclusion, and `scripts/pysidam_agent/domain_wall.py` for reusable DW masks and DW/away statistics.
-5. For deeper tasks, classify the request using `references/workflow.md` and query `references/pysidam-capability-index.json` with `scripts/pysidam_agent/capabilities.py`.
-6. Before quantitative fitting, map extraction, phase claims, or scientific conclusions, read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
-7. If the agent chooses a fitting interval, q vector/q window/filter sigma, or multipeak peak count, use `references/approval-gates.md` and stop for user approval before formal execution.
-8. Produce outputs that include inputs, data contracts, parameters, approval decisions when gated, quality metrics, warnings, and reproducibility notes.
+- read the temperatures from each file header: `4.2 K`, `1.35 K`, `1.1 K`, `0.92 K`, `0.35 K`;
+- selected `LI Demod 1 X (A)`, aligned forward/backward sweeps, converted bias to `mV` and signal to `pA`;
+- normalized the main plot by the average signal in `|V| = 8-10 mV`;
+- made a vertically offset stacked spectrum figure without smoothing;
+- exported paper-facing `PDF`, `SVG`, `PNG`, and `TIFF`;
+- saved `processed_spectra.csv`, `paper_figure_provenance.json`, and the rerunnable script;
+- reran the script from scratch and verified all outputs were nonempty.
 
-## Runtime Bootstrap
+That is the intended feel of this skill: not a black box that says “done”, but a careful lab assistant that tells you what it read, what it changed, what it refused to guess, and where every output lives.
 
-The skill ships dependency manifests under `runtime/` and a safe bootstrapper:
+### What it helps agents do
+
+- **Read raw files safely**: inspect `.3ds`, `.sxm`, `.dat`, `.ibw`, `.csv`, `.tsv`, and text spectra without copying private data into the skill repository.
+- **Preserve data contracts**: record shape, axis order, bias units, divider, scan size, coordinate frame, selected channels, flips, transposes, and masks.
+- **Use PySIDAM where possible**: route Nanonis IO, gap fitting, Bragg/QPI lock-in, atom detection, and domain-wall masks through existing headless tools or thin bridge scripts.
+- **Stop for approval when it matters**: require user approval for agent-selected fit windows, q vectors/filter sigma, and multipeak peak counts.
+- **Package evidence**: save `report.json`, NPZ arrays, CSV tables, figures, approval records, warnings, and rerunnable commands.
+- **Keep interpretation cautious**: separate measured results from physical claims such as YSR states, topological modes, strain correlations, or phase jumps.
+
+### Quick Start
+
+For a new STM/SJTM analysis thread, start with a prompt like:
+
+```text
+Use the stm-sjtm-data-processing skill.
+
+Workspace:
+/path/to/stm-workspace
+
+Read:
+/path/to/stm-workspace/data_manifest.json
+/path/to/stm-workspace/outputs/initial_file_inventory.json
+
+Raw data are referenced through raw_data. Do not copy raw data into the skill repo.
+
+First confirm file shapes, axis order, bias unit/divider, channels, scan size,
+pixel size, coordinate frame, and origin convention.
+
+If you need to choose a fit window, q vector/filter sigma, or peak count,
+write approval_proposal.json first and wait for my approval before execution.
+```
+
+For local runtime checks:
+
+```bash
+python3 scripts/resolve_runtime.py --probe
+```
+
+If no cached runtime is ready:
 
 ```bash
 python3 scripts/bootstrap_runtime.py --groups headless
 ```
 
-The core manifest is `runtime/requirements-core.txt`; companion manifests cover Nanonis IO, IBW export, AI atom detection, and UI-wrapped helpers.
-
-`headless` expands to:
-
-```text
-core + nanonis + ibw
-```
-
-This installs core numerical tools, `nanonispy`, and `igorwriter` into a per-skill virtual environment under a user-writable cache directory. It never uses `sudo`, never installs into system Python, never modifies conda base, and never runs `brew`.
-
-Optional groups are available when a task needs them:
+Common bridge commands:
 
 ```bash
-python3 scripts/bootstrap_runtime.py --groups headless,ai
-python3 scripts/bootstrap_runtime.py --groups headless,ui
-python3 scripts/bootstrap_runtime.py --groups all
-```
-
-For offline or controlled installs, provide a wheelhouse:
-
-```bash
-python3 scripts/bootstrap_runtime.py --groups headless --no-network --wheelhouse /path/to/wheelhouse
-```
-
-Useful safety flags:
-
-```bash
-python3 scripts/bootstrap_runtime.py --dry-run
-python3 scripts/bootstrap_runtime.py --groups headless --pysidam-root /path/to/pysidam
-python3 scripts/bootstrap_runtime.py --groups headless --pysidam-mode none
-```
-
-The bootstrapper writes `runtime.json` inside the cache with the venv path, dependency groups, PySIDAM source path, and post-install probe results.
-
-For repeated use across project directories, use the resolver:
-
-```bash
-python3 scripts/resolve_runtime.py
-python3 scripts/resolve_runtime.py --probe
-python3 scripts/resolve_runtime.py --print-python
-python3 scripts/resolve_runtime.py --bootstrap-command
-```
-
-The resolver calls `scripts/probe_runtime.py` through the cached runtime Python when a prepared runtime exists.
-
-Host-specific defaults, such as a local PySIDAM source checkout, belong in:
-
-```text
-~/.config/stm-sjtm-data-processing/host.json
-```
-
-The skill repository should stay portable; do not commit host paths.
-
-## PySIDAM Agent Bridge
-
-The bridge scripts under `scripts/pysidam_agent/` are thin, reusable adapters. They auto-reexec into the cached runtime from `runtime.json` when possible, add the host PySIDAM source root from `host.json` or `runtime.json`, and emit compact JSON or PNG outputs.
-
-```bash
-python3 scripts/pysidam_agent/capabilities.py --domain core_io
 python3 scripts/pysidam_agent/read_file.py --quick data/example.dat --output-json outputs/read_summary.json
 python3 scripts/pysidam_agent/plot_spectrum.py data/example.dat --output outputs/spectrum.png --summary-json outputs/spectrum.json
 python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wave" --output-dir outputs/gap_fit
 python3 scripts/pysidam_agent/bragg_phase.py policy
 python3 scripts/pysidam_agent/bragg_phase.py inspect-roi data/topo.sxm --roi -0.5 0.5 2.0 3.0 --output-json outputs/q_roi.json
 python3 scripts/pysidam_agent/phase_lockin.py run data/topo.npy --scan-size-nm 20 20 --q q1=1.5,0.0 --output-dir outputs/phase_lockin
-python3 scripts/pysidam_agent/bragg_phase.py lockin-from-decision --decision approvals/approval_decision.json --raw-root raw_data --output-dir outputs/bragg_phase
 python3 scripts/pysidam_agent/atom_ai.py recommend-scale --shape-yx 512 512 --scan-size-nm 20 20 --resize-ratio 1.5 --expected-spacing-nm 0.3515625
-python3 scripts/pysidam_agent/atom_ai.py lattice-qc outputs/atoms.csv --expected-spacing-nm 0.3515625 --scan-size-nm 20 20
-python3 scripts/pysidam_agent/atom_ai.py wipe-regions outputs/atoms.csv --regions-json regions.json --output-csv outputs/atoms_wiped.csv
 python3 scripts/pysidam_agent/domain_wall.py build-masks --shape-yx 128 128 --scan-size-nm 30 30 --regions-json dw_regions.json --near-width-nm 1.0 --output-dir outputs/domain_wall
-python3 scripts/pysidam_agent/domain_wall.py stats outputs/ingap_map.npy --masks-npz outputs/domain_wall/data/domain_wall_masks.npz --metric-name strict_ingap --output-dir outputs/domain_wall_ingap_stats
 ```
 
-The bridge is intentionally outside PySIDAM. It does not modify PySIDAM source, avoids Qt windows by default, and keeps full headers and raw arrays out of JSON summaries unless explicitly requested. For `.3ds` files, `read_file.py` defaults to divider `1.0` because Nanonis bias axes are treated as already divider-corrected by the experiment software; apply extra scaling only when the user explicitly requests it. For gap fitting, the bridge delegates to the bundled headless `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`, which uses PySIDAM core model definitions without importing UI-wrapped fitter modules. For Bragg phase work, `bragg_phase.py policy` enforces the user-q/ROI-first decision point, `inspect-roi` handles user-marked peak regions, and `phase_lockin.py run` is the clean 2D lock-in tool for `.sxm`, `.3ds`, `.npy`, `.npz`, or table maps. It writes `report.json`, `phase_lockin_maps.npz`, and `phase_lockin_stats.csv`, and records `pysidam.qpi_analysis.qpi_phase_analysis.lockin_phase_extraction` as the lock-in engine. Downstream strain, phase-jump, or spectroscopy-correlation scripts should consume that package instead of reimplementing lock-in. For AI atom recognition, `atom_ai.py` records detector scale choices such as `resize_ratio`, checks the resulting square-lattice site quality, and applies human-requested DW or defect-region wipes without relabeling atoms outside those regions. For Domain Wall comparisons, `domain_wall.py` keeps human-marked broad DW geometry, refined on-DW masks, near-DW masks, and away masks in one reusable package so spectroscopy, topography, and phase maps use the same region definition.
+### Tutorials and references
 
-## Approval Gates
+- [Agent-guided STM Data Analysis](docs/tutorials/agent-guided-stm-data-analysis.md)
+- [GitHub Wiki](https://github.com/Wangq1h/Nanonis-STM-Analysis-Skill/wiki)
+- [Workflow reference](references/workflow.md)
+- [Data contracts](references/data-contracts.md)
+- [Quality checks](references/quality-checks.md)
+- [Approval gates](references/approval-gates.md)
+- [PySIDAM capability map](references/pysidam-capability-map.md)
 
-Version `v0.2.3` adds a standard approval workflow for scientifically sensitive agent choices:
-
-- `fit_window`: fitting intervals, superconducting coherence-peak windows, and peak-search windows.
-- `q_selection`: FFT-derived q vectors, q windows, and filter sigma for QPI, lock-in, p_LL, or phase analysis.
-- `peak_count`: number of peaks in multipeak fitting.
-
-Agents create `approval_proposal.json`, optionally render a static review page with `scripts/approval_gate.py render-html`, wait for approval or modification, then continue only from `approval_decision.json`. Routine IO, previews, crop QC, summaries, and exports remain provenance-only and do not require separate approval.
-
-Useful commands:
-
-```bash
-python3 scripts/approval_gate.py validate-proposal --proposal approval_proposal.json
-python3 scripts/approval_gate.py render-html --proposal approval_proposal.json --output approval_review.html
-python3 scripts/approval_gate.py validate-decision --decision approval_decision.json
-python3 scripts/approval_gate.py validate-report --report report.json --decision-path approval_decision.json
-```
-
-## Codex Installation
+### Codex Installation
 
 Copy or synchronize this repository root to:
 
@@ -141,36 +102,13 @@ Copy or synchronize this repository root to:
 ~/.codex/skills/stm-sjtm-data-processing/
 ```
 
-The Codex entry point is `SKILL.md`. The portable references remain under `references/`.
-
 For local development, prefer:
 
 ```bash
 python3 scripts/sync_installed_skill.py
 ```
 
-This updates `~/.codex/skills/stm-sjtm-data-processing/` and removes installed `.git` metadata, so installed skills behave like plain packages while this source repository remains the Git working copy.
-
-## Non-Codex Agent Usage
-
-Agents that do not support Codex skills can read this repository directly:
-
-1. Start with this `README.md`.
-2. Load `references/workflow.md` and `references/data-contracts.md`.
-3. Load the domain reference needed for the user request.
-4. Treat `SKILL.md` as optional adapter text.
-
-## pysidam Relationship
-
-`pysidam` is treated as the preferred implementation source. When it is available, agents should use `references/pysidam-capability-index.json`, `references/pysidam-capability-map.md`, and `references/pysidam-tool-map.md` to select headless modules and functions. The repository also ships `pysidam_agent_core/`, a small headless package that extracts repeated agent-facing algorithms while continuing to use PySIDAM core model definitions. Raw Nanonis `.3ds`, `.sxm`, and `.dat` require `nanonispy` through the normal PySIDAM route; missing `nanonispy` should be reported as a dependency gap, not worked around with an unverified binary parser. PXP is not claimed as supported by the current PySIDAM-backed skill.
-
-PySIDAM is not assumed to be a standard pip package. The bootstrapper first uses an explicit `--pysidam-root`, `PYSIDAM_ROOT`, or nearby source checkout. If none is found and network is available, it can clone the PySIDAM repository into the skill cache and load it as source. It does not mutate existing user checkouts.
-
-The default PySIDAM dependency set is documented in `references/runtime-bootstrap.md`. The probe distinguishes "package can be found" from "module can actually be imported", which matters for Qt-wrapped modules.
-
-## Validation
-
-Run:
+### Validation
 
 ```bash
 python3 scripts/validate_package.py
@@ -182,6 +120,129 @@ Expected:
 PASS: stm-sjtm-data-processing package is structurally valid
 ```
 
-## GitHub Release
+### Developer Reference
 
-The current release line is `v0.2.4`. Release notes live in `RELEASE_NOTES_v0.2.4.md`.
+- Runtime manifest: `runtime/requirements-core.txt`
+- Runtime probe script: `scripts/probe_runtime.py`
+- Quick task cards: `references/task-cards/sts-dat-quick.md`, `references/task-cards/gap-fit-quick.md`
+- Capability index: `references/pysidam-capability-index.json`
+- Non-Codex Agent Usage: read this README first, then load the workflow, data-contract, and domain references needed for the task.
+- GitHub Release: release notes live in `RELEASE_NOTES_v*.md`; the current release line follows the latest versioned release note.
+
+---
+
+## 中文
+
+### 一个脱密后的真实使用片段
+
+> **研究者：**
+> “看一下 `raw_data/`。`001-005.dat` 是不同温度下测的超导谱，温度应该写在 header 里。使用 STM skill 读取数据，并画一张可以放进论文的高清图。”
+
+大约几分钟后，agent 返回的不是一句空泛的“已完成”，而是一组可追溯的结果：
+
+- 从每个文件 header 读出温度：`4.2 K`、`1.35 K`、`1.1 K`、`0.92 K`、`0.35 K`；
+- 使用 `LI Demod 1 X (A)`，对齐 forward/backward sweep，将 bias 转成 `mV`，信号转成 `pA`；
+- 主图按 `|V| = 8-10 mV` 的平均值归一化；
+- 输出一张垂直错开的 stacked spectrum 图，没有平滑；
+- 导出论文图常用的 `PDF`、`SVG`、`PNG`、`TIFF`；
+- 同时保存 `processed_spectra.csv`、`paper_figure_provenance.json` 和可复跑脚本；
+- fresh rerun 验证通过，输出文件非空。
+
+这就是这个 skill 希望提供的体验：它不是一个直接替你下结论的黑盒，而是一个谨慎的实验助理。它会告诉你读了什么、改了什么、哪些参数不能擅自决定、图和数据保存在哪里，以及这次结果怎样复现。
+
+### 它能帮 agent 做什么
+
+- **安全读取原始数据**：检查 `.3ds`、`.sxm`、`.dat`、`.ibw`、`.csv`、`.tsv` 和文本谱线，不把私有原始数据复制进 skill 仓库。
+- **固定数据契约**：记录 shape、axis order、bias 单位、divider、scan size、坐标系、通道、flip、transpose、mask 等。
+- **优先使用 PySIDAM**：能走 PySIDAM 或 headless bridge 的 Nanonis IO、gap fitting、Bragg/QPI lock-in、原子识别和 DW mask，就不重新造轮子。
+- **关键参数先审批**：agent 自己选择 fit window、q vector/filter sigma、peak count 时，先生成 `approval_proposal.json`，等用户确认后再执行。
+- **输出 evidence package**：保存 `report.json`、NPZ、CSV、图、审批记录、warnings 和可复现命令。
+- **物理解读保持克制**：把测量结果和物理解释分开，避免仅凭 gap filling、相位图或应变 proxy 就做过强结论。
+
+### 快速开始
+
+新的 STM/SJTM 分析线程可以这样开头：
+
+```text
+使用 stm-sjtm-data-processing skill。
+
+实验工作区：
+/path/to/stm-workspace
+
+请先读取：
+/path/to/stm-workspace/data_manifest.json
+/path/to/stm-workspace/outputs/initial_file_inventory.json
+
+原始数据通过 raw_data 引用，不要复制进 skill 仓库。
+
+先确认文件 shape、axis order、bias unit/divider、通道、scan size、
+pixel size、coordinate frame 和 origin convention。
+
+如果需要由 agent 选择 fit window、q vector/filter sigma 或 peak count，
+必须先写 approval_proposal.json，等我确认后再执行。
+```
+
+运行环境检查：
+
+```bash
+python3 scripts/resolve_runtime.py --probe
+```
+
+如果没有可用缓存环境：
+
+```bash
+python3 scripts/bootstrap_runtime.py --groups headless
+```
+
+常用 bridge 命令：
+
+```bash
+python3 scripts/pysidam_agent/read_file.py --quick data/example.dat --output-json outputs/read_summary.json
+python3 scripts/pysidam_agent/plot_spectrum.py data/example.dat --output outputs/spectrum.png --summary-json outputs/spectrum.json
+python3 scripts/pysidam_agent/fit_gap.py data/example.dat --model "Two Band s-wave" --output-dir outputs/gap_fit
+python3 scripts/pysidam_agent/bragg_phase.py policy
+python3 scripts/pysidam_agent/bragg_phase.py inspect-roi data/topo.sxm --roi -0.5 0.5 2.0 3.0 --output-json outputs/q_roi.json
+python3 scripts/pysidam_agent/phase_lockin.py run data/topo.npy --scan-size-nm 20 20 --q q1=1.5,0.0 --output-dir outputs/phase_lockin
+python3 scripts/pysidam_agent/atom_ai.py recommend-scale --shape-yx 512 512 --scan-size-nm 20 20 --resize-ratio 1.5 --expected-spacing-nm 0.3515625
+python3 scripts/pysidam_agent/domain_wall.py build-masks --shape-yx 128 128 --scan-size-nm 30 30 --regions-json dw_regions.json --near-width-nm 1.0 --output-dir outputs/domain_wall
+```
+
+### 教程和参考
+
+- [Agent-guided STM Data Analysis](docs/tutorials/agent-guided-stm-data-analysis.md)
+- [GitHub Wiki](https://github.com/Wangq1h/Nanonis-STM-Analysis-Skill/wiki)
+- [工作流参考](references/workflow.md)
+- [数据契约](references/data-contracts.md)
+- [质量检查](references/quality-checks.md)
+- [审批门禁](references/approval-gates.md)
+- [PySIDAM 能力图](references/pysidam-capability-map.md)
+
+### Codex 安装
+
+复制或同步本仓库到：
+
+```text
+~/.codex/skills/stm-sjtm-data-processing/
+```
+
+本地开发时推荐：
+
+```bash
+python3 scripts/sync_installed_skill.py
+```
+
+### 校验
+
+```bash
+python3 scripts/validate_package.py
+```
+
+期望输出：
+
+```text
+PASS: stm-sjtm-data-processing package is structurally valid
+```
+
+## Relationship to PySIDAM
+
+`pysidam` is treated as the preferred implementation source. This repository adds agent-facing workflow rules, approval gates, runtime probing, bridge scripts, and reporting conventions around it. The goal is to help an agent use the right scientific tool and preserve enough evidence for another researcher to audit the result.
