@@ -12,7 +12,7 @@ This repository contains a portable agent skill for scanning tunneling microscop
 
 ### STS Figure Extraction in Action
 
-![STS figure extraction demo](assets/demo-sts-figure-extraction.gif)
+![STS figure extraction chat demo](assets/sts-agent-chat-demo.png)
 
 > **Researcher:**
 > “Look at `raw_data/`. The files `001-005.dat` are superconducting spectra taken at different temperatures. The temperatures should be in the headers. Use the STM skill, read the data, and make a clean figure that can go into a paper.”
