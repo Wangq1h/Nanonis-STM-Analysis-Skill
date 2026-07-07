@@ -14,7 +14,7 @@
 
 **Files:**
 - Modify: `scripts/validate_package.py`
-- Create: `RELEASE_NOTES_v0.2.0.md`
+- Create: `docs/releases/RELEASE_NOTES_v0.2.0.md`
 
 - [x] Add required files for `pysidam_agent_core/__init__.py`, `io.py`, `models.py`, `numerics.py`, `gap_fitting.py`, and release notes.
 - [x] Add validation that `pysidam_agent_core` and `scripts/pysidam_agent/fit_gap.py` do not import `PyQt5`, `pyqtgraph`, `QApplication`, or `pysidam.useful_tools.usefultools_deconvolution_point`.

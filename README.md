@@ -344,7 +344,7 @@ Agents that do not support Codex skills can read this repository directly:
 - Quick task cards: `references/task-cards/sts-dat-quick.md`, `references/task-cards/gap-fit-quick.md`
 - Capability index: `references/pysidam-capability-index.json`
 - Other Agent Runtimes: read this README first, then load the workflow, data-contract, and domain references needed for the task.
-- GitHub Release: release notes live in `RELEASE_NOTES_v*.md`; the current release line follows the latest versioned release note.
+- GitHub Release: release notes live in `docs/releases/`; the current release line follows the latest versioned release note.
 
 ## pysidam Relationship
 
@@ -374,4 +374,4 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-The current release line is `v3.0`. Release notes live in `RELEASE_NOTES_v3.0.md`.
+The current release line is `v3.0`. Release notes live in `docs/releases/RELEASE_NOTES_v3.0.md`.
