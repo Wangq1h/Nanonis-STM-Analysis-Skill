@@ -82,6 +82,10 @@ PySIDAM's `.ibw` reader does not require `igor2`. It reads Igor Binary Wave v5/v
 
 For spectral `.ibw`, pass `obj.signals`, `obj.header`, and `obj.bias` to `prepare_3ds_dataset`; use `bias_already_mv=True` when `header["ibw_bias_already_mv"]` is set.
 
+## Export
+
+Use `analystm export spec-dat` for Nanonis-style spectroscopy `.dat` files and `analystm export grid-3ds` for Nanonis-style grid `.3ds` files. The `.3ds` writer follows PySIDAM's internal `(x, y, bias)` cube contract. Use `analystm export ibw` only when optional `igorwriter` is available, and record the wave name, source key, and units.
+
 ## NPZ
 
 PySIDAM archives require:

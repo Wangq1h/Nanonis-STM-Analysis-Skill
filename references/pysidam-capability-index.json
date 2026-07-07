@@ -103,6 +103,13 @@
           "requires": ["numpy", "scipy", "skimage"]
         },
         {
+          "name": "topography_fft_filter",
+          "module": "pysidam.topography.topography_filter",
+          "api": "FFTFilterWindow.update_filtered, _build_fft_complex",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "requires": ["numpy", "scipy"]
+        },
+        {
           "name": "ai_atom_detection",
           "module": "pysidam.topography.topography_ai_identificator",
           "api": "_get_atom_detector_cls",
@@ -131,10 +138,11 @@
         },
         {
           "name": "topography_display_filter",
-          "module": "pysidam.topography.topography_display, pysidam.topography.topography_filter",
-          "api": "TopographyWindow, FFTFilterWindow",
-          "status": "GUI_ONLY",
-          "requires": ["PyQt5", "pyqtgraph"]
+          "module": "pysidam.topography.topography_display",
+          "api": "TopographyWindow.reprocess_data, reprocess_fft, update_linecut_topo, update_linecut_fft, calculate_lattice",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.topography_display, analystm topography display-fft",
+          "requires": ["numpy", "scipy"]
         }
       ]
     },
@@ -169,10 +177,10 @@
         {
           "name": "spectroscopy_display",
           "module": "pysidam.spectroscopy.spectroscopy_display",
-          "api": "SpectroscopyDisplayWindow",
-          "status": "GUI_ONLY",
-          "requires": ["PyQt5", "pyqtgraph"],
-          "bridge": "scripts/pysidam_agent/plot_spectrum.py"
+          "api": "SpectroscopyDisplayWindow.auto_detect_offset, run_pipeline, update_derivative_plot, _build_nanonis_export_payload",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.spectroscopy, analystm spectroscopy process",
+          "requires": ["numpy", "scipy"]
         }
       ]
     },
@@ -203,8 +211,10 @@
         {
           "name": "waterfall_and_grid_views",
           "module": "pysidam.linecutmap.linecutmap_waterfall",
-          "api": "GridSpectroscopyWindow, MapSpectroscopyWindow, create_waterfall_window",
-          "status": "GUI_ONLY"
+          "api": "BaseMapSpectroscopyWindow._get_linecut_indices, run_batch_auto_peak_align, perform_spatial_interpolation, _analyze_single_peak, run_waterfall_fitting, _get_waterfall_export_table, _get_waterfall_points_json_payload",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.waterfall, analystm waterfall",
+          "requires": ["numpy", "scipy"]
         }
       ]
     },
@@ -261,8 +271,14 @@
         {
           "name": "one_dimensional_qpi",
           "module": "pysidam.qpi_analysis.qpi_1D_QPI",
-          "api": "QPI1DWindow",
-          "status": "GUI_ONLY"
+          "api": "_extract_linecut_pixels, _apply_fft_q0_mask, QPI1DWindow.recompute_linecut_and_fft",
+          "status": "GUI_WRAPPED_EXTRACT"
+        },
+        {
+          "name": "qpi_fft_filter",
+          "module": "pysidam.qpi_analysis.qpi_filter",
+          "api": "QPIFilterWindow._build_mask_2d, _build_realspace_payload_cube",
+          "status": "GUI_WRAPPED_EXTRACT"
         }
       ]
     },
@@ -298,7 +314,7 @@
           "name": "spstm_map_topography_qpi_contrast",
           "module": "pysidam.spstm.spstm_map_contrast, pysidam.spstm.spstm_topography_contrast, pysidam.spstm.spstm_qpi_contrast",
           "api": "SPSTMMapContrastWindow, SPSTMTopographyContrastWindow, SPSTMQPIContrastWindow",
-          "status": "GUI_ONLY"
+          "status": "GUI_WRAPPED_EXTRACT"
         }
       ]
     },
@@ -339,16 +355,37 @@
           "requires": ["igorwriter"]
         },
         {
-          "name": "histogram_crop_path_viz",
-          "module": "pysidam.useful_tools.usefultools_histogram, pysidam.useful_tools.usefultools_map_crop, pysidam.useful_tools.usefultools_path_viz",
-          "api": "HistogramWindow, UsefulToolsMapCropWindow, SurfaceSurveyPathVizWindow",
-          "status": "GUI_ONLY"
+          "name": "useful_histogram",
+          "module": "pysidam.useful_tools.usefultools_histogram",
+          "api": "HistogramWindow._apply_background_mode, _sample_fit_values, _build_trace_fit, _max_hist_bin_count, update_histograms",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.histogram, analystm histogram",
+          "requires": ["numpy", "scipy"]
+        },
+        {
+          "name": "useful_map_crop",
+          "module": "pysidam.useful_tools.usefultools_map_crop",
+          "api": "UsefulToolsMapCropWindow._compute_sampling_geometry, _sample_display_patch, _build_generated_header, _crop_sxm_signals, _crop_3ds_signals",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.map_crop, analystm crop map",
+          "requires": ["numpy", "scipy"]
+        },
+        {
+          "name": "surface_survey_path_viz",
+          "module": "pysidam.useful_tools.usefultools_path_viz",
+          "api": "SurfaceSurveyPathVizWindow._pending_segments, _all_points_for_view, confirm_pending_steps, _autoscale_fit, _autoscale_origin, export_table_excel, _redistribute_overflow",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.path_viz, analystm path-viz build",
+          "requires": ["numpy"]
         },
         {
           "name": "publication_editor",
           "module": "pysidam.core.publication_editor",
-          "api": "capture_pyqtgraph_plot, capture_matplotlib_canvas, PublicationFigureWindow",
-          "status": "GUI_ONLY"
+          "api": "ImagePayload, LinePayload, FigurePayload, AnnotationPayload, _regularize_image_extent, _image_shape_score, _axis_centers_from_extent, _thin_line_points, _downsample_image_for_editor, _payload_data_limits, _line_payload_limits, _filter_inset_images_from_payload, PublicationFigureWindow._nice_length, _suggest_scalebar_length, _apply_image_contrast",
+          "status": "GUI_WRAPPED_EXTRACT",
+          "public_surface": "analystm.publication, analystm publication payload",
+          "requires": ["numpy"],
+          "notes": "Qt/Matplotlib widget capture and interactive editor remain UI-layer behavior; payload geometry, limits, downsampling, contrast, and scale-bar helpers are public backend code."
         }
       ]
     }

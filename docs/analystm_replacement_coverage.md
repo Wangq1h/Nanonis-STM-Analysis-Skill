@@ -1,0 +1,42 @@
+# AnalySTM Replacement Coverage
+
+AnalySTM is the public replacement backend for STM/SJTM agent workflows. PySIDAM is used as a migration source and regression reference, not as the runtime engine for supported public commands.
+
+Reports should name `analystm.*` functions as the execution engine. PySIDAM function names belong in `pysidam_source_mapping` fields for auditability.
+
+## Coverage Matrix
+
+| Domain | PySIDAM source surface | AnalySTM replacement status | Public surface |
+| --- | --- | --- | --- |
+| Core Nanonis IO | `pysidam.core.nanonis_io` | Replaced by normalized source copy without private runtime dependency | `analystm.nanonis_io`, `analystm read` |
+| Core dataset/bias/import IO | `pysidam.core.dataset_utils`, `bias_utils`, `import_io` | Replaced by normalized source copies | `analystm.dataset_utils`, `analystm.bias_utils`, `analystm.import_io` |
+| Core Nanonis export | `pysidam.core.export.write_nanonis_spec_dat`, `write_nanonis_grid_3ds` | Replaced for UI-free `.dat` spectroscopy export, internal `(x, y, bias)` `.3ds` grid export, and optional Igor Binary Wave export; Qt/PDF widget capture remains GUI-only | `analystm.export`, `analystm export spec-dat`, `analystm export grid-3ds`, `analystm export ibw` |
+| FFT windowing | `pysidam.core.fft_windowing` | Replaced by normalized source copy | `analystm.fft_windowing` |
+| Gap DOS models | `pysidam.core.superconducting_gap_models` | Replaced by normalized source copy | `analystm.gap_models`, `analystm fit-gap` |
+| Gap-map peak extraction | `PeakFitter.fit_single_pixel` | Replaced with headless batch API | `analystm.gap_map.extract_gap_map`, `analystm gap-map` |
+| SJTM Ic/superfluid metrics | `SJTMIcExtractionWindow`, `SJTMSuperfluidDensityWindow` compute methods | Replaced for PySIDAM Quick/Accurate Ic Gaussian row fitting, retry jitter, fit-parameter payloads, strict G(0) window handling, Rn/G(0)/ns maps, and reportable provenance | `analystm.sjtm.compute_sjtm_package`, `analystm sjtm` |
+| Point SIS/NIS deconvolution | `usefultools_deconvolution_point` | Replaced for Dynes DOS, NIS/SIS dI/dV, SIS matrix solve, SIS point/grid runner | `analystm.deconvolution`, `analystm deconvolve` |
+| Grid deconvolution helpers | `usefultools_deconvolution_grid` matrix/stat helper functions | Replaced for linear resampling, weighted pseudo-inverse, R2, cube masked mean | `analystm.build_linear_resample_matrix`, `analystm.build_pinv_operator`, `analystm.compute_r2_score`, `analystm.nanmean_cube_over_pixels` |
+| Bragg/QPI lock-in and real phase | `qpi_phase_analysis.lockin_phase_extraction`, `qpi_real_phase.lockin_phase`, `PRLibWindow.run_prlib` | Replaced for 2D complex lock-in packages, wrapped/unwrapped phase maps, amplitude masks, and `p_LL` real-phase maps | `analystm.phase_lockin`, `analystm phase-lockin`, `analystm.qpi.compute_real_phase_pll`, `analystm qpi real-phase` |
+| Atom QC / wipe | AI detector plus agent QC helpers | Public scale/QC/wipe replacement exists; optional detector runtime remains external, and the AI model/weights are planned for a later public release | `analystm.atom_ai`, `analystm atom` |
+| Domain-wall masks/stats | Agent DW helpers | Replaced | `analystm.domain_wall`, `analystm domain-wall` |
+| Intensity / Z-ratio / bias calibration maps | `linecutmap_intensity`, `qpi_pr_pqi` z-ratio branch | Replaced for linecut intensity signal modes, smoothing/interpolation/range/baseline processing, H/V cuts, peak-align-zero bias calibration, and negative/positive Z-ratio maps | `analystm.intensity`, `analystm intensity` |
+| Waterfall linecut maps | `linecutmap_waterfall.BaseMapSpectroscopyWindow` | Replaced for linecut flat-index selection, optional spatial interpolation, peak-align-zero calibration, Gaussian/manual peak extraction, waterfall offset/baseline handling, export tables, and point JSON payloads; Qt plot/PDF/SVG drawing remains GUI/export-only | `analystm.waterfall`, `analystm waterfall fit`, `analystm waterfall peak-align-zero` |
+| QPI display FFT, PR-QPI/PQPI, and QPI symmetry | `qpi_display`, `qpi_pr_pqi`, `qpi_symmetry` | Replaced for QPI display FFT base/postprocess volume, PR/PQPI positive/negative volume computation, rotate-average symmetry, and LF correction helpers shared with topography | `analystm.qpi`, `analystm qpi fft-volume`, `analystm qpi pr-qpi`, `analystm qpi symmetry` |
+| 1D-QPI and QPI FFT filter | `qpi_1D_QPI`, `qpi_filter` | Replaced for nearest-pixel linecut extraction, optional linear-tilt spectrum correction, K-E FFT, discrete q=0 notch, q-axis generation, and cube FFT ROI pass/stop filtering | `analystm.qpi.compute_qpi_1d_fft`, `analystm qpi 1d-fft`, `analystm.fft_filter`, `analystm qpi fft-filter` |
+| Topography LF drift correction | `LFDriftCorrector`, `qpi_symmetry` LF helper wrappers | Replaced for FFT-peak q conversion, lock-in phase displacement solving, image/stack warping, and reportable UX/UY fields | `analystm.topography`, `analystm topography lf-drift` |
+| Topography display processing | `topography_display.TopographyWindow` | Replaced for background modes, display FFT windowing/scaling, topography and FFT linecut sampling, and lattice constant calculation; Qt image widgets/PDF capture remain GUI/export-only | `analystm.topography_display`, `analystm topography display-fft` |
+| Topography FFT filter | `topography_filter.FFTFilterWindow` | Replaced for background modes, FFT windowing, circular/rectangular ROI pass/stop masks, optional -q inclusion, inverse FFT filtered maps, and FFT diagnostic payloads | `analystm.fft_filter`, `analystm topography fft-filter` |
+| Spectroscopy display processing | `spectroscopy_display.SpectroscopyDisplayWindow` | Replaced for auto offset detection, bias scaling/offset, symmetrization, smoothing, normalization, Feenstra normalization, derivative processing, and Nanonis export payload construction | `analystm.spectroscopy`, `analystm spectroscopy process` |
+| Useful histogram | `usefultools_histogram.HistogramWindow` | Replaced for background correction modes, finite-value range/bin handling, histogram stats, max-bin trace scaling, deterministic KDE sample thinning, and KDE/interpolation fit curves | `analystm.histogram`, `analystm histogram` |
+| Useful map crop | `usefultools_map_crop.UsefulToolsMapCropWindow` | Replaced for square ROI sampling geometry, rotated bilinear map sampling, safe percentile contrast levels, generated crop headers, SXM orientation restoration, and 3DS `(x, y, bias)` crop output | `analystm.map_crop`, `analystm crop map` |
+| Surface survey path visualization | `usefultools_path_viz.SurfaceSurveyPathVizWindow` | Replaced for pending move segments, confirmed path batches, point lists, autoscale fit/origin bounds, path-log table rows, and overflow redistribution; Qt/matplotlib figure rendering remains UI/export-only | `analystm.path_viz`, `analystm path-viz build` |
+| Publication figure payload helpers | `core.publication_editor` | Replaced for payload dataclasses, image extent regularization, image scoring, axis-center generation, line thinning, image downsampling, degenerate image-to-line conversion, payload limits, inset image filtering, contrast modes, and scale-bar length/label helpers; Qt/Matplotlib widget capture and the interactive editor remain UI-only | `analystm.publication`, `analystm publication payload` |
+| Multipeak fitting | `UniversalVortexFitterEngine` | Replaced with migrated `PeakFitResult` and `UniversalVortexFitterEngine` backend, including Gaussian/Lorentzian profiles, offset/full-trace-linear/Igor cubic backgrounds, per-row peak counts, manual initial centers, quality metrics, and debug payload export | `analystm.multipeak`, `analystm multipeak fit` |
+| SPSTM contrast | `spstm_didv_contrast`, `spstm_map_contrast`, `spstm_qpi_contrast`, `spstm_topography_contrast` | Replaced for dI/dV spectrum preprocessing/symmetrization/smoothing/normalization, 2D background subtraction, linecut sampling/profile normalization, QPI R90 anisotropy, and +/- bias spin contrast | `analystm.spstm`, `analystm spstm` |
+
+## Replacement Rules
+
+- No supported AnalySTM path may require `PYSIDAM_ROOT`, private source paths, Qt, pyqtgraph, or GUI windows.
+- If a migrated algorithm changes behavior, the change must be recorded in tests and release notes.
+- Legacy bridge scripts may use PySIDAM for explicit regression comparison or historical compatibility checks, but they are not the public backend contract.

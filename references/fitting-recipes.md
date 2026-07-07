@@ -133,6 +133,14 @@ Outputs:
 - Left peak, right peak, and gap-size maps for gap extraction.
 - Diagnostic plots.
 
+AnalySTM route:
+
+- Use `analystm multipeak fit` for migrated `UniversalVortexFitterEngine` linecut fitting.
+- Inputs are an `.npz` with `bias`, `position`, and spectra-by-bias `data` arrays by default.
+- The command writes `multipeak_outputs.npz`, `multipeak_summary.csv`, and `report.json`.
+- Reports record `analystm.multipeak.run_multipeak_fit` as the execution engine and `UniversalVortexFitterEngine.run_fit/evaluate_at/collect_debug_state_payload` as `pysidam_source_mapping`.
+- Supported options include Gaussian/Lorentzian profiles, offset/full-trace-linear/Igor cubic backgrounds, fixed width, per-row peak-count maps, manual initial centers, row ranges, R2 thresholds, SNR thresholds, and peak amplitude thresholds.
+
 pysidam mapping:
 
 - `pysidam.linecutmap.linecutmap_gap_map_extraction.PeakFitter.fit_single_pixel` for Gaussian peak extraction inside left/right search windows.
@@ -177,8 +185,15 @@ Outputs:
 - Per-pixel status maps.
 - Report entry with target energies and interpolation method.
 
+AnalySTM route:
+
+- Use `analystm intensity process` for linecut intensity signal modes, smoothing, interpolation, bias-range clipping, and baseline removal.
+- Use `analystm intensity z-ratio` for negative/positive or positive/negative Z-ratio maps with recorded denominator regularization.
+- Use `analystm intensity peak-align-zero` for pixelwise peak-align-zero bias calibration and offset-map export.
+
 pysidam mapping:
 
 - `pysidam.linecutmap.linecutmap_intensity` implements intensity modes `dI/dV`, `d2`, and `neg_d3`.
+- `pysidam.qpi_analysis.qpi_pr_pqi` provides the migrated negative/positive Z-ratio denominator regularization branch.
 - Use `d2` for the numerical first derivative of dI/dV, and `neg_d3` for the negative second derivative of dI/dV.
 - Record derivative order, smoothing, interpolation, baseline removal, integration windows, and denominator floors.
