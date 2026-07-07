@@ -46,6 +46,7 @@ Do not claim PySIDAM support for PXP until a PySIDAM reader or documented conver
 Prefer pure or mostly headless pieces:
 
 - `pysidam.topography.topography_correction.LFDriftCorrector`: FFT peak refinement, `get_q_vector`, `lockin_phase`, `compute_drift_field`, `warp_image`.
+- `pysidam.topography.topography_display.TopographyWindow`: background modes, display FFT construction, topography/FFT linecut sampling, and lattice constant readout.
 - `pysidam.topography.topography_ai_identificator._get_atom_detector_cls`: lazy loader for `Atom_Identificator_core.AtomDetector`.
 
 For AI atom detection, call `AtomDetector` directly when available. Use `scripts/pysidam_agent/atom_ai.py recommend-scale` before detection, then `lattice-qc` after detection. Record detector config such as `patch_size`, `stride`, `resize_ratio`, `gaussian_blur_ksize`, `clip_percentile`, `min_dist`, `prob_threshold`, `force_cpu`, and `base_channels`. For human-marked DW, dirty, highlighted, or defect regions, use `wipe-regions` to mark `excluded_<label>` without changing AI labels outside the region.
@@ -54,10 +55,13 @@ For Domain Wall map comparisons, use `scripts/pysidam_agent/domain_wall.py polic
 
 Record raw map, corrected map, q vectors, displacement fields, scan size, pixel size, and every flip/transpose/warp.
 
+Public AnalySTM route: use `analystm topography display-fft`, `analystm topography lf-drift`, and `analystm topography fft-filter` for non-GUI topography processing.
+
 ## Spectroscopy And Fitting
 
 Core model helpers:
 
+- `pysidam.spectroscopy.spectroscopy_display.SpectroscopyDisplayWindow`: auto offset detection, bias scaling/offset, symmetrization, smoothing, normalization, derivative display, and export payload construction.
 - `pysidam.core.superconducting_gap_models.evaluate_gap_dos_model`: isotropic s, d-wave, anisotropic s, two-band, three-band, s+d, and FeSe two-band anisotropic model evaluation.
 - `get_dynes_fit_model_defaults`, `get_deconvolution_fit_param_spec`, `map_deconvolution_fit_values`, `build_gap_model_summary_params`.
 - `pysidam_agent_core.gap_fitting.fit_gap_model_guarded`: headless agent bridge for multistart superconducting gap fitting, using PySIDAM core model specs without importing UI modules.
@@ -72,6 +76,12 @@ Multipeak fitting:
 - `pysidam.linecutmap.linecutmap_multipeak_fitting.UniversalVortexFitterEngine`.
 - Main methods: `run_fit`, `evaluate_at`, `collect_debug_state_payload`, `save_debug_state`.
 - Supported profiles/backgrounds include Gaussian, Lorentzian, offset, full-trace linear, and Igor-style cubic background.
+- Public AnalySTM route: use `analystm multipeak fit`, which migrates `PeakFitResult` and `UniversalVortexFitterEngine` into `analystm.multipeak` without Qt or private PySIDAM runtime imports.
+
+Waterfall linecut maps:
+
+- `pysidam.linecutmap.linecutmap_waterfall.BaseMapSpectroscopyWindow`: linecut flat-index selection, spatial interpolation, peak-align-zero calibration, per-trace negative/positive peak extraction, baseline subtraction, waterfall offset, export table, and point JSON payload.
+- Public AnalySTM route: use `analystm waterfall fit` for peak table/JSON exports and `analystm waterfall peak-align-zero` for calibrated grids.
 
 Some spectroscopy and linecut modules import Qt at module import time. If imports are blocked, use the documented algorithm contract and core model helpers, and report the blocked module.
 
@@ -89,15 +99,22 @@ Grid deconvolution helpers in `pysidam.useful_tools.usefultools_deconvolution_gr
 
 Require tip state, temperature, normalization policy, fit window, zero-peak exclusion, broadening, and model assumptions before interpreting parameters physically.
 
+Public AnalySTM route: use `analystm spectroscopy process` for display-style point-spectroscopy preprocessing and `analystm fit-gap` for superconducting DOS fitting.
+
 ## QPI, FFT, Lock-In, And Symmetry
 
 Use:
 
 - `pysidam.qpi_analysis.qpi_display`: `_compute_fft_base_volume`, `_postprocess_fft_volume`, `_prepare_fft_block`.
 - `pysidam.qpi_analysis.qpi_phase_analysis`: `lockin_phase_extraction`, `_refine_peak_near`, `_unwrap_phase_2d`.
-- `pysidam.qpi_analysis.qpi_real_phase`: `lockin_phase`, background helpers, phase wrapping helpers.
+- `pysidam.qpi_analysis.qpi_real_phase`: `lockin_phase`, background helpers, phase wrapping helpers, `PRLibWindow.run_prlib` p_LL formula.
 - `pysidam.qpi_analysis.qpi_pr_pqi`: `_compute_pr_qpi_volume` for PR-QPI/PQPI style volumes.
 - `pysidam.qpi_analysis.qpi_symmetry`: `apply_affine_to_stack`, `build_affine_from_bragg_vectors`, `estimate_lf_displacement`, `apply_lf_displacement_to_stack`, `symmetrize_qpi`, `_compute_fft_volume`.
+- `pysidam.qpi_analysis.qpi_1D_QPI`: `_extract_linecut_pixels`, `_apply_fft_q0_mask`, and `QPI1DWindow.recompute_linecut_and_fft` for K-E 1D-QPI.
+- `pysidam.qpi_analysis.qpi_filter`: `QPIFilterWindow._build_mask_2d` and `_build_realspace_payload_cube` for FFT ROI filtering of QPI cubes.
+- `pysidam.topography.topography_filter.FFTFilterWindow`: `update_filtered` for topography FFT ROI filtering.
+
+Public AnalySTM route: use `analystm qpi fft-volume` for QPI display FFT base/postprocess volumes, `analystm qpi 1d-fft` for K-E 1D-QPI, `analystm qpi fft-filter` for QPI cube FFT ROI filtering, `analystm topography fft-filter` for topography FFT ROI filtering, `analystm qpi pr-qpi` for `_compute_pr_qpi_volume`, `analystm qpi symmetry` for `symmetrize_qpi`, and `analystm qpi real-phase` for the qpi_real_phase p_LL workflow.
 
 Save window type, DC mask, FFT display scale, q vectors, complex fields, amplitude, phase, masks, and threshold sweeps. Keep `+q`, `-q`, `qx`, and `qy` diagnostics separate until a justified merge.
 
@@ -107,11 +124,11 @@ For routine 2D lock-in extraction, use `scripts/pysidam_agent/phase_lockin.py ru
 
 Use SJTM window modules as source for algorithm contracts. They are UI-heavy, so import only when Qt works:
 
-- `pysidam.sjtm.sjtm_ic.SJTMIcExtractionWindow._compute_ic_row` and `_compute_ic_map`: fit negative and positive Josephson branches with Gaussian windows; compute `|Ic|` from average absolute dip/peak currents.
+- `pysidam.sjtm.sjtm_ic.SJTMIcExtractionWindow._compute_ic_row` and `_compute_ic_map`: fit negative and positive Josephson branches with Gaussian windows; compute `|Ic|` from average absolute dip/peak currents. Quick and Accurate modes differ by `maxfev`, retry count, and jitter policy.
 - `pysidam.sjtm.sjtm_superfluid.SJTMSuperfluidDensityWindow._compute_metrics`: compute normal resistance from a low-bias linear slope, G(0) from a Gaussian window near zero, and a superfluid proxy `ns = G(0) * Rn^2`.
 - `_resolve_g0_window_mask` and `_fit_gaussian_segment` define the zero-bias conductance window and fallback behavior.
 
-Record bias scaling, fit windows, minimum points, fitting mode, fallback paths, units, and tip/sample assumptions.
+Public AnalySTM route: use `analystm sjtm`, which exposes the migrated Quick/Accurate Ic modes and the Rn/G(0)/ns map calculation. Record bias scaling, fit windows, minimum points, fitting mode, fallback paths, units, and tip/sample assumptions.
 
 ## Intensity And Derived Maps
 
@@ -125,4 +142,19 @@ Record derivative order, bias spacing, smoothing, interpolation, baseline remova
 
 ## SPSTM And Utilities
 
-Use SPSTM, histogram, crop, path visualization, palette, and export modules only when the request calls for them. Keep them out of the default STM/SJTM path unless relevant.
+SPSTM contrast helpers:
+
+- `pysidam.spstm.spstm_didv_contrast.SPSTMDidVContrastWindow.run_pipeline`: bias offset, optional symmetrization, smoothing, Feenstra-style normalization, and A/B interpolation.
+- `pysidam.spstm.spstm_map_contrast` and `spstm_topography_contrast`: reusable background subtraction, linecut sampling, and profile normalization.
+- `pysidam.spstm.spstm_qpi_contrast.SPSTMQPIContrastWindow`: R90 anisotropy, Bragg-peak normalization, presymmetry, and +/- bias spin contrast.
+
+Public AnalySTM route: use `analystm spstm didv`, `analystm spstm qpi-r90`, or `analystm spstm qpi-spin`.
+
+Useful Tools routes:
+
+- `pysidam.useful_tools.usefultools_histogram.HistogramWindow`: use `analystm histogram` for background correction, finite-value histogram bins/stats, and KDE/interpolated trace export.
+- `pysidam.useful_tools.usefultools_map_crop.UsefulToolsMapCropWindow`: use `analystm crop map` for square ROI geometry, rotated interpolation, generated headers, SXM orientation restoration, and 3DS cube crop output.
+- `pysidam.useful_tools.usefultools_path_viz.SurfaceSurveyPathVizWindow`: use `analystm path-viz build` for pending move segments, confirmed path batches, path-log table rows, point JSON, and autoscale bounds.
+- `pysidam.core.publication_editor`: use `analystm publication payload` and `analystm.publication` for payload dataclasses, image extent/limits, downsampling, contrast, inset filtering, and scale-bar helpers. Widget capture and interactive editing remain UI-layer behavior.
+
+Use histogram, crop, path visualization, palette, and export modules only when the request calls for them. Keep them out of the default STM/SJTM path unless relevant.

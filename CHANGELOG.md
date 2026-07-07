@@ -1,11 +1,36 @@
 # Changelog
 
-## Unreleased
+## v3.0 - 2026-07-07
 
+- Added the public AnalySTM backend package under `src/analystm`, with `import analystm` and the `analystm` CLI as the default agent runtime surface.
+- Added public CLI routes for `read`, `plot-spectrum`, `spectroscopy`, `fit-gap`, `gap-map`, `multipeak`, `intensity`, `waterfall`, `qpi`, `topography`, `histogram`, `crop`, `path-viz`, `publication`, `export`, `bragg`, `phase-lockin`, `atom`, `domain-wall`, `sjtm`, and `deconvolve`.
+- Added true headless PySIDAM-derived implementations for gap-map peak extraction, SJTM Ic/superfluid calculations, and SIS dI/dV deconvolution.
+- Reframed AnalySTM as the replacement backend: reports now name `analystm.*` engines and keep PySIDAM names as source mappings for auditability.
+- Replaced the simplified SIS forward-model shortcut and DOS display normalization with the migrated direct integral and robust-tail normalization behavior.
+- Migrated grid deconvolution helper APIs for linear resampling, weighted pseudo-inverse operators, R2 scoring, and masked cube means.
+- Migrated Nanonis `.dat` spectroscopy export, `.3ds` grid export, and optional Igor Binary Wave export into `analystm.export` and `analystm export`.
+- Migrated linecut intensity processing, derivative signal modes, H/V cuts, peak-align-zero bias calibration, and negative/positive Z-ratio maps into `analystm.intensity` and `analystm intensity`.
+- Migrated waterfall linecut-map fitting and peak-align-zero calibration, including linecut flat-index selection, optional spatial interpolation, Gaussian/manual peak extraction, baseline/offset handling, export tables, and point JSON payloads, into `analystm.waterfall` and `analystm waterfall`.
+- Migrated PR-QPI/PQPI positive/negative volume computation and QPI rotate-average symmetry into `analystm.qpi` and `analystm qpi`.
+- Migrated QPI display FFT volume processing and qpi_real_phase p_LL maps into `analystm.qpi`, `analystm qpi fft-volume`, and `analystm qpi real-phase`.
+- Migrated 1D-QPI K-E linecut FFT and topography/QPI FFT ROI filtering into `analystm.qpi`, `analystm.fft_filter`, `analystm qpi 1d-fft`, `analystm qpi fft-filter`, and `analystm topography fft-filter`.
+- Migrated SPSTM dI/dV preprocessing, map/topography linecut profile helpers, QPI R90 anisotropy, and +/- bias spin contrast into `analystm.spstm` and `analystm spstm`.
+- Completed the SJTM Ic migration by adding PySIDAM Quick/Accurate Gaussian branch fitting, retry jitter, fit-parameter payloads, and strict G(0) window behavior to `analystm.sjtm` and `analystm sjtm`.
+- Migrated topography LF drift correction from `LFDriftCorrector`, including q-vector conversion, lock-in displacement fields, UX/UY convention, and image/stack warping, into `analystm.topography` and `analystm topography lf-drift`.
+- Migrated topography display processing from `TopographyWindow`, including background modes, display FFT payloads, linecut sampling, and lattice readout, into `analystm.topography_display` and `analystm topography display-fft`.
+- Migrated spectroscopy display processing from `SpectroscopyDisplayWindow`, including auto offset, symmetrization, smoothing, normalization, derivative generation, and Nanonis export payload construction, into `analystm.spectroscopy` and `analystm spectroscopy process`.
+- Migrated useful-tools histogram and map-crop logic from `HistogramWindow` and `UsefulToolsMapCropWindow`, including background correction, histogram KDE traces, ROI sampling geometry, generated headers, SXM orientation restoration, and 3DS crop output, into `analystm.histogram`, `analystm.map_crop`, `analystm histogram`, and `analystm crop map`.
+- Migrated surface survey path-viz state/table logic from `SurfaceSurveyPathVizWindow`, including pending move segments, confirmed path batches, point lists, autoscale bounds, path-log rows, and overflow redistribution, into `analystm.path_viz` and `analystm path-viz build`.
+- Migrated publication payload helpers from `core.publication_editor`, including payload dataclasses, extent/limits helpers, line thinning, image downsampling, contrast modes, inset filtering, and scale-bar helpers, into `analystm.publication` and `analystm publication payload`.
+- Migrated multipeak linecut fitting from `PeakFitResult` and `UniversalVortexFitterEngine`, including Gaussian/Lorentzian profiles, offset/full-trace-linear/Igor cubic backgrounds, per-row peak counts, manual initial centers, quality metrics, and debug payload export, into `analystm.multipeak` and `analystm multipeak fit`.
+- Added a replacement coverage matrix under `docs/analystm_replacement_coverage.md`.
+- Added public-backend boundary tests and validation so `src/analystm` does not require private PySIDAM source paths, `PYSIDAM_ROOT`, PyQt5, pyqtgraph, or dataset-specific paths.
+- Updated skill routing so AnalySTM is preferred first, with the older `scripts/pysidam_agent/*` bridge kept as a compatibility fallback.
 - Added reusable AI atom-recognition helpers in `pysidam_agent_core.atom_ai` and `scripts/pysidam_agent/atom_ai.py`.
 - Added scale guidance for detector `resize_ratio`, including the 20 nm / 512 px / 1.5x reference scale of 0.0260417 nm per inference pixel and 13.5 inference pixels per 0.3515625 nm atom spacing.
 - Added post-detection square-lattice QC so failed AI atom recognition triggers parameter tuning and rerun instead of manual review/calibration relabeling.
 - Added human-marked DW/dirty/defect wipe support that marks `excluded_<label>` while preserving AI A/B labels outside the region.
+- Documented that the AI atom-recognition model and weights remain an optional external dependency in v3.0, with public model release planned as the next step.
 - Added reusable Domain Wall mask/stat helpers in `pysidam_agent_core.domain_wall` and `scripts/pysidam_agent/domain_wall.py`.
 - Added DW policy, broad/on/near/away mask packaging, refined on-DW support, and DW/away map statistics so agents do not recreate one-off DW scripts.
 - Added `scripts/pysidam_agent/phase_lockin.py` and `pysidam_agent_core.phase_lockin` as the clean PySIDAM 2D lock-in pipeline for phase analysis.
