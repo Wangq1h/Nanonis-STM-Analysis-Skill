@@ -1,8 +1,85 @@
-# STM/SJTM Data Processing Agent Skill
+<div align="center">
+  <img src="assets/stm-agent-icon.png" alt="STM Analysis Agent icon" width="132">
 
-This repository contains a portable agent skill and the public installable AnalySTM 3.0 backend for scanning tunneling microscopy and superconducting-tip STM data processing. It helps agents read raw data, plot spectra, run fitting and lock-in helpers, preserve data contracts, apply approval gates, and produce reproducible evidence packages without requiring a private PySIDAM checkout.
+  <h1>STM/SJTM Data Processing Agent Skill</h1>
+
+  <p><strong>From raw Nanonis files to paper-ready STM figures, with data contracts, approval gates, and reproducible evidence built in.</strong></p>
+
+  <p>
+    <a href="README.md"><img alt="Language: English" src="https://img.shields.io/badge/lang-English-2563eb"></a>
+    <a href="README.zh-CN.md"><img alt="Language: Simplified Chinese" src="https://img.shields.io/badge/lang-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c2410c"></a>
+    <img alt="Release v3.0" src="https://img.shields.io/badge/release-v3.0-64748b">
+    <img alt="STM STS SJTM" src="https://img.shields.io/badge/domain-STM%20%2F%20STS%20%2F%20SJTM-0f766e">
+    <img alt="AnalySTM backend" src="https://img.shields.io/badge/backend-AnalySTM-7c3aed">
+    <img alt="Evidence package" src="https://img.shields.io/badge/output-evidence%20package-0369a1">
+  </p>
+
+  <p>
+    <a href="docs/tutorials/agent-guided-stm-data-analysis.md">Tutorial</a>
+    · <a href="https://github.com/Wangq1h/Nanonis-STM-Analysis-Skill/wiki">Wiki</a>
+    · <a href="references/workflow.md">Workflow</a>
+    · <a href="references/data-contracts.md">Data Contracts</a>
+    · <a href="references/approval-gates.md">Approval Gates</a>
+  </p>
+</div>
+
+---
+
+![STS figure extraction chat demo](assets/sts-agent-chat-demo.png)
+
+This repository contains a portable agent skill and the public installable AnalySTM 3.0 backend for scanning tunneling microscopy (STM), scanning tunneling spectroscopy (STS), and superconducting-tip STM (SJTM) data processing. It helps agents read raw data, plot spectra, run fitting and lock-in helpers, preserve data contracts, apply approval gates, and produce reproducible evidence packages without requiring a private PySIDAM checkout.
 
 The package is documentation-first, with a headless Python package under `src/analystm`, a CLI named `analystm`, portable helper scripts for runtime probing, safe dependency bootstrapping, installed-skill syncing, and a legacy agent bridge over PySIDAM. It does not contain private experimental data or dataset-specific scripts.
+
+## Why This Skill Exists
+
+STM data analysis is full of small choices that matter: channel names, bias units, sweep direction, gap windows, q vectors, masks, and normalization ranges. This skill gives an agent a disciplined working mode: first establish the data contract, then propose sensitive parameters, then return figures and evidence that another researcher can rerun.
+
+## STS Figure Extraction in Action
+
+> **Researcher:**
+> "Look at `raw_data/`. The files `001-005.dat` are superconducting spectra taken at different temperatures. The temperatures should be in the headers. Use the STM skill, read the data, and make a clean figure that can go into a paper."
+
+Seven minutes later, the agent comes back with a compact, auditable result:
+
+- read the temperatures from each file header: `4.2 K`, `1.35 K`, `1.1 K`, `0.92 K`, `0.35 K`;
+- selected `LI Demod 1 X (A)`, aligned forward/backward sweeps, converted bias to `mV` and signal to `pA`;
+- normalized the main plot by the average signal in `|V| = 8-10 mV`;
+- made a vertically offset stacked spectrum figure without smoothing;
+- exported paper-facing `PDF`, `SVG`, `PNG`, and `TIFF`;
+- saved `processed_spectra.csv`, `paper_figure_provenance.json`, and the rerunnable script;
+- reran the script from scratch and verified all outputs were nonempty.
+
+That is the intended feel of this skill: not a black box that says "done", but a careful lab assistant that shows what it read, what it changed, which choices stayed auditable, and where every output lives.
+
+## Approval Gates in Action
+
+The same pattern matters even more for Bragg/QPI work. A vague request such as "the red-box qB peak looks more like a Bragg peak" is not treated as permission to run a phase analysis. The agent first turns it into a `q_selection` gate: propose the ROI-derived q vector, show the FFT evidence, list the risks, and wait for the user to approve or modify the scientific parameters.
+
+<p align="center">
+  <img src="assets/scenario-qb-red-peak-correction.png" alt="q-vector approval workflow for Bragg lock-in" width="920">
+</p>
+
+In this example, the user can confirm the choice in several natural ways: accept the red-ROI local maximum, type an explicit q vector, or adjust the lock-in filter. Only after that does the agent write `approval_decision.json` and continue with the qB lock-in outputs.
+
+## Phase Hygiene in Action
+
+Phase maps have their own traps. When a continuous display profile appears to jump by nearly `2π`, the skill pushes the agent to separate display artifacts from physical interpretation: branch-cut bins can be omitted from the plotted profile, while the underlying phase data and left/right domain statistics remain auditable.
+
+<p align="center">
+  <img src="assets/scenario-phase-branch-cut.png" alt="Branch-cut-aware Bragg phase display" width="920">
+</p>
+
+That distinction is deliberate. The agent may improve the figure so it does not imply a false spike, but it should not turn a wrapped-phase branch cut into a physical phase-jump claim.
+
+## What It Helps Agents Do
+
+- **Read raw files safely**: inspect `.3ds`, `.sxm`, `.dat`, `.ibw`, `.csv`, `.tsv`, and text spectra without copying private data into the skill repository.
+- **Preserve data contracts**: record shape, axis order, bias units, divider, scan size, coordinate frame, selected channels, flips, transposes, and masks.
+- **Use AnalySTM first**: run supported public workflows through the headless `analystm` backend, with PySIDAM kept as a development reference and explicit legacy fallback.
+- **Stop for approval when it matters**: require user approval for agent-selected fit windows, q vectors/filter sigma, and multipeak peak counts.
+- **Package evidence**: save `report.json`, NPZ arrays, CSV tables, figures, approval records, warnings, and rerunnable commands.
+- **Keep interpretation cautious**: separate measured results from physical claims such as YSR states, topological modes, strain correlations, or phase jumps.
 
 ## Supported Work
 
@@ -16,17 +93,50 @@ The package is documentation-first, with a headless Python package under `src/an
 
 ## Quick Start
 
+For a new STM/SJTM analysis thread, start with a prompt like:
+
+```text
+Use the stm-sjtm-data-processing skill.
+
+Workspace:
+/path/to/stm-workspace
+
+Read:
+/path/to/stm-workspace/data_manifest.json
+/path/to/stm-workspace/outputs/initial_file_inventory.json
+
+Raw data are referenced through raw_data. Do not copy raw data into the skill repo.
+
+First confirm file shapes, axis order, bias unit/divider, channels, scan size,
+pixel size, coordinate frame, and origin convention.
+
+If you need to choose a fit window, q vector/filter sigma, or peak count,
+write approval_proposal.json first and wait for my approval before execution.
+```
+
 For any STM/SJTM task, an agent should:
 
 1. Run `analystm --help` after installation, or `PYTHONPATH=src python3 -m analystm --help` from a source checkout with dependencies installed, to confirm the public backend is available.
 2. For simple STS `.dat` reading or diagnostic plots, use the quick card `references/task-cards/sts-dat-quick.md`, then prefer `analystm read` and `analystm plot-spectrum`.
-3. For gap fitting, read `references/task-cards/gap-fit-quick.md`, then use `analystm fit-gap` for single-spectrum superconducting gap fitting. Use `analystm multipeak fit` for PySIDAM-derived UniversalVortexFitterEngine multipeak linecut fitting, `analystm topography lf-drift` and `analystm topography fft-filter` for LF drift/FFT filter work, `analystm intensity` for linecut intensity derivatives, Z-ratio maps, and peak-align-zero bias calibration, `analystm qpi` for 1D-QPI, FFT filter, PR-QPI/PQPI, and QPI symmetry helpers, `analystm bragg` and `analystm phase-lockin` for Bragg/q-vector and 2D lock-in helpers, `analystm atom` for atom-detection scale/QC/wipe tools, and `analystm domain-wall` for reusable DW masks and DW/away statistics.
+3. For gap fitting, read `references/task-cards/gap-fit-quick.md`, then use `analystm fit-gap` for single-spectrum superconducting gap fitting.
 4. If a command requires optional raw-data dependencies, run `python3 scripts/resolve_runtime.py --probe`; if no cached runtime is ready and local execution is allowed, run `python3 scripts/bootstrap_runtime.py --groups headless` to create an isolated user runtime.
 5. Use the legacy `scripts/pysidam_agent/*` bridge only for explicit PySIDAM regression runs or historical compatibility checks; new reportable work should use `analystm`.
 6. For deeper tasks, classify the request using `references/workflow.md` and query `references/pysidam-capability-index.json` with `scripts/pysidam_agent/capabilities.py`.
 7. Before quantitative fitting, map extraction, phase claims, or scientific conclusions, read `references/runtime-bootstrap.md`, `references/data-contracts.md`, and `references/quality-checks.md`.
 8. If the agent chooses a fitting interval, q vector/q window/filter sigma, or multipeak peak count, use `references/approval-gates.md` and stop for user approval before formal execution.
 9. Produce outputs that include inputs, data contracts, parameters, approval decisions when gated, quality metrics, warnings, and reproducibility notes.
+
+For local runtime checks:
+
+```bash
+python3 scripts/resolve_runtime.py --probe
+```
+
+If no cached runtime is ready:
+
+```bash
+python3 scripts/bootstrap_runtime.py --groups headless
+```
 
 ## AnalySTM Backend
 
@@ -189,7 +299,7 @@ python3 scripts/approval_gate.py validate-decision --decision approval_decision.
 python3 scripts/approval_gate.py validate-report --report report.json --decision-path approval_decision.json
 ```
 
-## Codex Installation
+## Skill Installation
 
 Copy or synchronize this repository root to:
 
@@ -207,7 +317,7 @@ python3 scripts/sync_installed_skill.py
 
 This updates `~/.codex/skills/stm-sjtm-data-processing/` and removes installed `.git` metadata, so installed skills behave like plain packages while this source repository remains the Git working copy.
 
-## Non-Codex Agent Usage
+## Other Agent Runtimes
 
 Agents that do not support Codex skills can read this repository directly:
 
@@ -215,6 +325,26 @@ Agents that do not support Codex skills can read this repository directly:
 2. Load `references/workflow.md` and `references/data-contracts.md`.
 3. Load the domain reference needed for the user request.
 4. Treat `SKILL.md` as optional adapter text.
+
+## References
+
+- [Agent-guided STM Data Analysis](docs/tutorials/agent-guided-stm-data-analysis.md)
+- [GitHub Wiki](https://github.com/Wangq1h/Nanonis-STM-Analysis-Skill/wiki)
+- [Workflow reference](references/workflow.md)
+- [Data contracts](references/data-contracts.md)
+- [Quality checks](references/quality-checks.md)
+- [Approval gates](references/approval-gates.md)
+- [PySIDAM capability map](references/pysidam-capability-map.md)
+- [AnalySTM replacement coverage](docs/analystm_replacement_coverage.md)
+
+## Developer Reference
+
+- Runtime manifest: `runtime/requirements-core.txt`
+- Runtime probe script: `scripts/probe_runtime.py`
+- Quick task cards: `references/task-cards/sts-dat-quick.md`, `references/task-cards/gap-fit-quick.md`
+- Capability index: `references/pysidam-capability-index.json`
+- Other Agent Runtimes: read this README first, then load the workflow, data-contract, and domain references needed for the task.
+- GitHub Release: release notes live in `RELEASE_NOTES_v*.md`; the current release line follows the latest versioned release note.
 
 ## pysidam Relationship
 
