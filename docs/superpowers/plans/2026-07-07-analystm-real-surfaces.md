@@ -78,7 +78,7 @@
 **Files:**
 - Modify: `scripts/validate_package.py`
 - Modify: `README.md`
-- Modify: `RELEASE_NOTES_v3.0.md`
+- Modify: `docs/releases/RELEASE_NOTES_v3.0.md`
 - Modify: `CHANGELOG.md`
 
 - [ ] Update validation required files/tokens to include real backend modules.

@@ -194,7 +194,7 @@ PASS: stm-sjtm-data-processing package is structurally valid
 
 ## GitHub Release
 
-Release notes 位于 `RELEASE_NOTES_v*.md`，当前 release line 跟随最新版本 release note。
+Release notes 位于 `docs/releases/`，当前 release line 跟随最新版本 release note。
 
 ## 参考
 
@@ -213,7 +213,7 @@ Release notes 位于 `RELEASE_NOTES_v*.md`，当前 release line 跟随最新版
 - Quick task cards: `references/task-cards/sts-dat-quick.md`, `references/task-cards/gap-fit-quick.md`
 - Capability index: `references/pysidam-capability-index.json`
 - Other Agent Runtimes: 先读 README，再按任务加载 workflow、data-contract 和领域参考。
-- GitHub Release: release notes 位于 `RELEASE_NOTES_v*.md`，当前 release line 跟随最新版本 release note。
+- GitHub Release: release notes 位于 `docs/releases/`，当前 release line 跟随最新版本 release note。
 
 ## 与 PySIDAM 的关系
 
