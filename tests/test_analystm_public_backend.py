@@ -7,7 +7,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -127,6 +129,21 @@ class AnalySTMPublicBackendTests(unittest.TestCase):
         self.assertEqual(rho.shape, energy.shape)
         self.assertTrue(np.isfinite(rho).all())
         self.assertGreater(float(np.max(rho)), 0.0)
+
+    def test_read_signals_accepts_raw_3ds_through_analystm_nanonis_reader(self) -> None:
+        sys.path.insert(0, str(SRC))
+        try:
+            from analystm.io import load_signals
+        finally:
+            sys.path.remove(str(SRC))
+
+        fake_grid = SimpleNamespace(signals={"LI Demod 1 X (A)": np.zeros((2, 3, 5))})
+        fake_file = SimpleNamespace(obj=fake_grid)
+        with patch("analystm.nanonis_io.read_nanonis_file", return_value=fake_file):
+            signals, reader = load_signals("fake.3ds")
+
+        self.assertEqual(reader, "analystm.nanonis_io.read_nanonis_file")
+        self.assertIn("LI Demod 1 X (A)", signals)
 
     def test_public_backend_source_has_no_private_runtime_or_gui_dependency(self) -> None:
         package_root = SRC / "analystm"

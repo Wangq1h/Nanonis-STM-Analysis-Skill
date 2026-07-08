@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import unittest
+import json
+import tempfile
+from pathlib import Path
 
 import numpy as np
 
+from analystm.cli.main import main as analystm_main
 from pysidam_agent_core.bragg_phase import (
     find_peak_in_roi,
     q_axes_cycles_per_nm,
@@ -61,6 +65,15 @@ class BraggPhaseCoreTests(unittest.TestCase):
 
         self.assertEqual(q_policy["mode"], "user_preapproved_q")
         self.assertEqual(roi_policy["mode"], "user_preferred_roi")
+
+    def test_cli_agent_search_policy_is_not_misread_as_user_q(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "bragg_policy.json"
+            rc = analystm_main(["bragg", "policy", "--allow-agent-search", "--output-json", str(out)])
+
+            self.assertEqual(rc, 0)
+            policy = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(policy["mode"], "agent_proposal_required")
 
 
 if __name__ == "__main__":

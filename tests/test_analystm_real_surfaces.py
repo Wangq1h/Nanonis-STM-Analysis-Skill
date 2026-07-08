@@ -6,7 +6,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -35,6 +37,32 @@ def _run_analystm(args: list[str], cwd: Path = ROOT) -> subprocess.CompletedProc
 
 
 class AnalySTMRealSurfaceTests(unittest.TestCase):
+    def test_gap_map_loader_accepts_3ds_via_analystm_reader(self) -> None:
+        sys.path.insert(0, str(SRC))
+        try:
+            from analystm.cli.main import _load_gap_map_input
+        finally:
+            sys.path.remove(str(SRC))
+
+        bias = np.linspace(-2.0, 2.0, 5)
+        cube_xyb = np.arange(2 * 3 * bias.size, dtype=float).reshape(2, 3, bias.size)
+        fake_grid = SimpleNamespace(
+            signals={"LI Demod 1 X (A)": cube_xyb, "sweep_signal": bias},
+            header={"grid_dim": [2, 3], "num_sweep_signal": bias.size, "size_xy": [12e-9, 9e-9]},
+            bias=bias,
+        )
+        fake_file = SimpleNamespace(obj=fake_grid)
+
+        with patch("analystm.nanonis_io.read_nanonis_file", return_value=fake_file):
+            loaded_bias, loaded_cube, meta = _load_gap_map_input("fake.3ds", "bias", "LI Demod 1 X (A)")
+
+        np.testing.assert_allclose(loaded_bias, bias * 1e3)
+        self.assertEqual(loaded_cube.shape, (3, 2, bias.size))
+        np.testing.assert_allclose(loaded_cube[0, 0, :], cube_xyb[0, 0, :])
+        np.testing.assert_allclose(loaded_cube[2, 1, :], cube_xyb[1, 2, :])
+        self.assertEqual(meta["reader"], "analystm.nanonis_io.read_nanonis_file -> analystm.dataset_utils.prepare_3ds_dataset")
+        self.assertEqual(meta["selected_channel"], "LI Demod 1 X (A)")
+
     def test_gap_map_cli_runs_pysidam_peakfitter_algorithm(self) -> None:
         bias = np.linspace(-4.0, 4.0, 81)
         cube = np.empty((3, 4, bias.size), dtype=float)

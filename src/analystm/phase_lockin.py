@@ -113,7 +113,7 @@ def q_cycles_to_pysidam_px_yx(
     return [float(center_y + qy * sy_nm), float(center_x + qx * sx_nm)]
 
 
-def run_pysidam_lockin(
+def run_lockin_phase(
     image_yx: Any,
     q_vectors_xy_cycles_per_nm: Mapping[str, tuple[float, float] | list[float]],
     scan_size_nm_xy: tuple[float, float],
@@ -123,7 +123,7 @@ def run_pysidam_lockin(
     engine: Callable[..., tuple[Any, Any, Any]] | None = None,
     unwrap_func: Callable[[Any], Any] | None = None,
 ) -> dict[str, Any]:
-    """Run PySIDAM 2D lock-in extraction and return a standard map package."""
+    """Run AnalySTM 2D lock-in phase extraction and return a standard map package."""
     image = np.asarray(image_yx, dtype=float)
     if image.ndim != 2:
         raise ValueError("image_yx must be a 2D map")
@@ -201,6 +201,9 @@ def run_pysidam_lockin(
         "maps": maps,
         "stats_rows": stats_rows,
     }
+
+
+run_pysidam_lockin = run_lockin_phase
 
 
 def wrap_pi(phi: Any) -> np.ndarray:
