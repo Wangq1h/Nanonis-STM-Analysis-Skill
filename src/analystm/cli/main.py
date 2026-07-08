@@ -194,6 +194,59 @@ def _load_npz_array(path: str | Path, key: str, *, fallback_first: bool = False)
     raise KeyError(f"NPZ key not found: {key}")
 
 
+def _select_gap_map_cube(cubes: dict[str, Any], requested: str) -> tuple[str, np.ndarray]:
+    if not cubes:
+        raise ValueError("No spectral 3DS cubes were found for gap-map extraction")
+    if requested in cubes:
+        return requested, np.asarray(cubes[requested], dtype=float)
+    if requested and requested != "cube":
+        raise KeyError(f"3DS spectral channel not found: {requested}; available channels: {list(cubes)}")
+    if len(cubes) == 1:
+        name = next(iter(cubes))
+        return str(name), np.asarray(cubes[name], dtype=float)
+    raise ValueError(f"Multiple 3DS spectral channels found; specify --cube-key. Available channels: {list(cubes)}")
+
+
+def _load_gap_map_input(path: str | Path, bias_key: str, cube_key: str) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    in_path = Path(path).expanduser()
+    if in_path.suffix.lower() == ".3ds":
+        from analystm.dataset_utils import prepare_3ds_dataset
+        from analystm.nanonis_io import read_nanonis_file
+
+        nf = read_nanonis_file(in_path)
+        grid = nf.obj
+        cubes_xyb, bias_mv, scan_size_nm, _topo_xy = prepare_3ds_dataset(
+            getattr(grid, "signals", {}),
+            header=getattr(grid, "header", None),
+            bias=getattr(grid, "bias", None),
+            divider=1.0,
+        )
+        selected_channel, cube_xyb = _select_gap_map_cube(cubes_xyb, cube_key)
+        bias_arr = np.asarray(bias_mv, dtype=float).ravel()
+        cube_yxb = np.transpose(np.asarray(cube_xyb, dtype=float), (1, 0, 2))
+        if bias_arr.size == cube_yxb.shape[2]:
+            order = np.argsort(bias_arr)
+            bias_arr = bias_arr[order]
+            cube_yxb = cube_yxb[:, :, order]
+        meta = {
+            "path": str(in_path),
+            "format": ".3ds",
+            "reader": "analystm.nanonis_io.read_nanonis_file -> analystm.dataset_utils.prepare_3ds_dataset",
+            "bias_key": str(bias_key or "bias"),
+            "cube_key": str(cube_key or ""),
+            "selected_channel": selected_channel,
+            "available_channels": list(cubes_xyb),
+            "scan_size_nm": float(scan_size_nm),
+            "transforms": ["transpose internal (x, y, bias) to report-facing (y, x, bias)", "sort bias axis ascending"],
+        }
+        return bias_arr, np.ascontiguousarray(cube_yxb, dtype=float), meta
+
+    bias = _load_npz_array(in_path, bias_key)
+    cube = _load_npz_array(in_path, cube_key)
+    meta = {"path": str(in_path), "format": in_path.suffix.lower() or "npz", "bias_key": bias_key, "cube_key": cube_key}
+    return np.asarray(bias, dtype=float), np.asarray(cube, dtype=float), meta
+
+
 def _parse_q(values: list[str]) -> dict[str, tuple[float, float]]:
     out: dict[str, tuple[float, float]] = {}
     for idx, item in enumerate(values or []):
@@ -305,13 +358,16 @@ def _first_2d_npz_key(archive: Any) -> str:
 
 
 def cmd_phase_lockin(args: argparse.Namespace) -> int:
-    from analystm.phase_lockin import run_pysidam_lockin
+    from analystm.phase_lockin import run_lockin_phase
 
+    input_path = Path(args.path).expanduser()
     image = _load_map(args.path)
-    package = run_pysidam_lockin(
+    q_vectors = _parse_q(args.q)
+    scan_size_nm_xy = (float(args.scan_size_nm[0]), float(args.scan_size_nm[1]))
+    package = run_lockin_phase(
         image,
-        q_vectors_xy_cycles_per_nm=_parse_q(args.q),
-        scan_size_nm_xy=(args.scan_size_nm[0], args.scan_size_nm[1]),
+        q_vectors_xy_cycles_per_nm=q_vectors,
+        scan_size_nm_xy=scan_size_nm_xy,
         sigma_px=args.sigma_px,
         window=args.window,
         threshold_fractions=args.threshold,
@@ -319,13 +375,40 @@ def cmd_phase_lockin(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out_dir / "phase_lockin_maps.npz", **package["maps"])
-    _write_json(str(out_dir / "report.json"), {"metadata": package["metadata"], "outputs": {"maps": "phase_lockin_maps.npz"}})
     with (out_dir / "phase_lockin_stats.csv").open("w", newline="", encoding="utf-8") as handle:
         rows = package["stats_rows"]
         fieldnames = sorted({key for row in rows for key in row.keys()}) if rows else ["q_label"]
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+    report = {
+        "schema_version": 1,
+        "tool": "analystm phase-lockin",
+        "input": {
+            "path": str(input_path),
+            "shape_yx": [int(x) for x in np.asarray(image).shape],
+            "reader": "_load_map",
+        },
+        "analysis": {
+            "workflow": "clean 2D lock-in extraction",
+            "lockin_engine": package["metadata"]["lockin_engine"],
+            "policy": "Use the AnalySTM public lock-in API and preserve phase, amplitude, complex, and mask outputs.",
+        },
+        "parameters": {
+            "q_vectors_xy_cycles_per_nm": {label: [float(v[0]), float(v[1])] for label, v in q_vectors.items()},
+            "scan_size_nm_xy": [float(scan_size_nm_xy[0]), float(scan_size_nm_xy[1])],
+            "sigma_px": float(args.sigma_px),
+            "window": args.window,
+            "threshold_fractions": [float(x) for x in args.threshold],
+        },
+        "metadata": package["metadata"],
+        "outputs": {
+            "maps": "phase_lockin_maps.npz",
+            "maps_npz": "phase_lockin_maps.npz",
+            "stats_csv": "phase_lockin_stats.csv",
+        },
+    }
+    _write_json(str(out_dir / "report.json"), report)
     return 0
 
 
@@ -333,7 +416,9 @@ def cmd_bragg(args: argparse.Namespace) -> int:
     from analystm.bragg_phase import q_selection_policy
 
     if args.bragg_command == "policy":
-        _write_json(args.output_json, q_selection_policy(user_q=args.user_q, user_roi=args.user_roi, allow_agent_search=args.allow_agent_search))
+        user_q = [0.0, 0.0] if args.user_q else None
+        user_roi = {} if args.user_roi else None
+        _write_json(args.output_json, q_selection_policy(user_q=user_q, user_roi=user_roi, allow_agent_search=args.allow_agent_search))
         return 0
     raise SystemExit("bragg currently supports: policy")
 
@@ -563,8 +648,7 @@ def _load_center_map_argument(value: str) -> dict[int, list[float]] | None:
 def cmd_gap_map(args: argparse.Namespace) -> int:
     from analystm.gap_map import extract_gap_map
 
-    bias = _load_npz_array(args.path, args.bias_key)
-    cube = _load_npz_array(args.path, args.cube_key)
+    bias, cube, input_meta = _load_gap_map_input(args.path, args.bias_key, args.cube_key)
     package = extract_gap_map(
         bias,
         cube,
@@ -588,7 +672,7 @@ def cmd_gap_map(args: argparse.Namespace) -> int:
     report = {
         "schema_version": 1,
         "tool": "analystm gap-map",
-        "input": {"path": str(Path(args.path).expanduser()), "bias_key": args.bias_key, "cube_key": args.cube_key},
+        "input": input_meta,
         "algorithm": package["algorithm"],
         "parameters": package["parameters"],
         "summary": package["summary"],
@@ -1967,7 +2051,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit.add_argument("--y-channel", default="")
     p_fit.set_defaults(func=cmd_fit_gap)
 
-    p_gap = sub.add_parser("gap-map", help="Extract left/right peak and gap maps using the PySIDAM PeakFitter algorithm")
+    p_gap = sub.add_parser("gap-map", help="Extract left/right peak and gap maps with the AnalySTM peak fitter")
     p_gap.add_argument("path")
     p_gap.add_argument("--bias-key", default="bias")
     p_gap.add_argument("--cube-key", default="cube")
@@ -1981,7 +2065,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_gap.add_argument("--output-json")
     p_gap.set_defaults(func=cmd_gap_map)
 
-    p_multipeak = sub.add_parser("multipeak", help="Run PySIDAM UniversalVortexFitterEngine multipeak linecut fitting")
+    p_multipeak = sub.add_parser("multipeak", help="Run AnalySTM multipeak linecut fitting")
     multipeak_sub = p_multipeak.add_subparsers(dest="multipeak_command", required=True)
     p_multipeak_fit = multipeak_sub.add_parser("fit", help="Fit Gaussian/Lorentzian multipeak spectra by linecut row")
     p_multipeak_fit.add_argument("path")
@@ -2027,7 +2111,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_sjtm.add_argument("--output-json")
     p_sjtm.set_defaults(func=cmd_sjtm)
 
-    p_deconv = sub.add_parser("deconvolve", help="Run PySIDAM-style SIS dI/dV deconvolution without GUI")
+    p_deconv = sub.add_parser("deconvolve", help="Run AnalySTM SIS dI/dV deconvolution without GUI")
     p_deconv.add_argument("path")
     p_deconv.add_argument("--bias-key", default="bias")
     p_deconv.add_argument("--didv-key", default="didv")
@@ -2071,7 +2155,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_int_z.add_argument("--output-json")
     p_int_z.set_defaults(func=cmd_intensity)
 
-    p_int_align = int_sub.add_parser("peak-align-zero", help="Run PySIDAM-style peak-align-zero bias calibration")
+    p_int_align = int_sub.add_parser("peak-align-zero", help="Run AnalySTM peak-align-zero bias calibration")
     p_int_align.add_argument("path")
     p_int_align.add_argument("--bias-key", default="bias")
     p_int_align.add_argument("--cube-key", default="cube")
@@ -2093,7 +2177,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_qpi_sym.add_argument("--output-json")
     p_qpi_sym.set_defaults(func=cmd_qpi)
 
-    p_qpi_pr = qpi_sub.add_parser("pr-qpi", help="Compute PySIDAM PR-QPI/PQPI positive and negative volumes")
+    p_qpi_pr = qpi_sub.add_parser("pr-qpi", help="Compute AnalySTM PR-QPI/PQPI positive and negative volumes")
     p_qpi_pr.add_argument("path")
     p_qpi_pr.add_argument("--cube-key", default="cube")
     p_qpi_pr.add_argument("--bias-key", default="bias")
@@ -2108,7 +2192,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_qpi_pr.add_argument("--output-json")
     p_qpi_pr.set_defaults(func=cmd_qpi)
 
-    p_qpi_fft = qpi_sub.add_parser("fft-volume", help="Compute PySIDAM QPI display FFT magnitude volume")
+    p_qpi_fft = qpi_sub.add_parser("fft-volume", help="Compute AnalySTM QPI display FFT magnitude volume")
     p_qpi_fft.add_argument("path")
     p_qpi_fft.add_argument("--cube-key", default="cube")
     p_qpi_fft.add_argument("--window", default="Hanning")
@@ -2119,7 +2203,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_qpi_fft.add_argument("--output-json")
     p_qpi_fft.set_defaults(func=cmd_qpi)
 
-    p_qpi_1d = qpi_sub.add_parser("1d-fft", help="Compute PySIDAM 1D-QPI linecut K-E FFT")
+    p_qpi_1d = qpi_sub.add_parser("1d-fft", help="Compute AnalySTM 1D-QPI linecut K-E FFT")
     p_qpi_1d.add_argument("path")
     p_qpi_1d.add_argument("--cube-key", default="cube")
     p_qpi_1d.add_argument("--bias-key", default="bias")
@@ -2137,7 +2221,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_qpi_1d.add_argument("--output-json")
     p_qpi_1d.set_defaults(func=cmd_qpi)
 
-    p_qpi_filter = qpi_sub.add_parser("fft-filter", help="Apply PySIDAM QPI FFT ROI filter to a cube")
+    p_qpi_filter = qpi_sub.add_parser("fft-filter", help="Apply AnalySTM QPI FFT ROI filter to a cube")
     p_qpi_filter.add_argument("path")
     p_qpi_filter.add_argument("--cube-key", default="cube")
     p_qpi_filter.add_argument("--scan-size-nm", nargs=2, type=float, required=True, metavar=("SX", "SY"))
@@ -2152,7 +2236,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_qpi_filter.add_argument("--output-json")
     p_qpi_filter.set_defaults(func=cmd_qpi)
 
-    p_qpi_real = qpi_sub.add_parser("real-phase", help="Compute PySIDAM qpi_real_phase p_LL map from reference and target images")
+    p_qpi_real = qpi_sub.add_parser("real-phase", help="Compute AnalySTM qpi_real_phase p_LL map from reference and target images")
     p_qpi_real.add_argument("path")
     p_qpi_real.add_argument("--ref-key", default="ref")
     p_qpi_real.add_argument("--target-key", default="target")
@@ -2206,7 +2290,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_topo = sub.add_parser("topography", help="Topography correction and LF drift helpers")
     topo_sub = p_topo.add_subparsers(dest="topography_command", required=True)
-    p_topo_lf = topo_sub.add_parser("lf-drift", help="Run PySIDAM LFDriftCorrector-style low-frequency drift correction")
+    p_topo_lf = topo_sub.add_parser("lf-drift", help="Run AnalySTM low-frequency drift correction")
     p_topo_lf.add_argument("path")
     p_topo_lf.add_argument("--image-key", default="topo")
     p_topo_lf.add_argument("--q1", nargs=2, type=float, metavar=("QY", "QX"))
@@ -2222,7 +2306,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_topo_lf.add_argument("--output-json")
     p_topo_lf.set_defaults(func=cmd_topography)
 
-    p_topo_filter = topo_sub.add_parser("fft-filter", help="Apply PySIDAM topography FFT ROI filter")
+    p_topo_filter = topo_sub.add_parser("fft-filter", help="Apply AnalySTM topography FFT ROI filter")
     p_topo_filter.add_argument("path")
     p_topo_filter.add_argument("--image-key", default="topo")
     p_topo_filter.add_argument("--scan-size-nm", nargs=2, type=float, required=True, metavar=("SX", "SY"))
@@ -2238,7 +2322,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_topo_filter.add_argument("--output-json")
     p_topo_filter.set_defaults(func=cmd_topography)
 
-    p_topo_display = topo_sub.add_parser("display-fft", help="Compute PySIDAM topography display background and FFT payload")
+    p_topo_display = topo_sub.add_parser("display-fft", help="Compute AnalySTM topography display background and FFT payload")
     p_topo_display.add_argument("path")
     p_topo_display.add_argument("--image-key", default="topo")
     p_topo_display.add_argument("--scan-size-nm", type=float, required=True)
@@ -2251,7 +2335,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_spec = sub.add_parser("spectroscopy", help="Point-spectroscopy display processing helpers")
     spec_sub = p_spec.add_subparsers(dest="spectroscopy_command", required=True)
-    p_spec_process = spec_sub.add_parser("process", help="Run PySIDAM spectroscopy display pipeline")
+    p_spec_process = spec_sub.add_parser("process", help="Run AnalySTM spectroscopy display pipeline")
     p_spec_process.add_argument("path")
     p_spec_process.add_argument("--x-key", default="bias")
     p_spec_process.add_argument("--y-key", default="didv")
@@ -2297,7 +2381,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_waterfall = sub.add_parser("waterfall", help="Linecut-map waterfall fitting and peak-align-zero helpers")
     waterfall_sub = p_waterfall.add_subparsers(dest="waterfall_command", required=True)
-    p_wf_fit = waterfall_sub.add_parser("fit", help="Run PySIDAM waterfall peak extraction for selected spectra")
+    p_wf_fit = waterfall_sub.add_parser("fit", help="Run AnalySTM waterfall peak extraction for selected spectra")
     p_wf_fit.add_argument("path")
     p_wf_fit.add_argument("--cube-key", default="cube")
     p_wf_fit.add_argument("--bias-key", default="bias")
@@ -2317,7 +2401,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_wf_fit.add_argument("--output-json")
     p_wf_fit.set_defaults(func=cmd_waterfall)
 
-    p_wf_align = waterfall_sub.add_parser("peak-align-zero", help="Apply PySIDAM waterfall peak-align-zero calibration to a grid")
+    p_wf_align = waterfall_sub.add_parser("peak-align-zero", help="Apply AnalySTM waterfall peak-align-zero calibration to a grid")
     p_wf_align.add_argument("path")
     p_wf_align.add_argument("--cube-key", default="cube")
     p_wf_align.add_argument("--bias-key", default="bias")
@@ -2327,7 +2411,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_wf_align.add_argument("--output-json")
     p_wf_align.set_defaults(func=cmd_waterfall)
 
-    p_hist = sub.add_parser("histogram", help="Compute PySIDAM useful-tools histogram stats and KDE trace")
+    p_hist = sub.add_parser("histogram", help="Compute AnalySTM histogram stats and KDE trace")
     p_hist.add_argument("path")
     p_hist.add_argument("--data-key", default="")
     p_hist.add_argument("--layer-index", type=int, default=0)
@@ -2343,7 +2427,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_crop = sub.add_parser("crop", help="Headless map/cube crop helpers")
     crop_sub = p_crop.add_subparsers(dest="crop_command", required=True)
-    p_crop_map = crop_sub.add_parser("map", help="Crop a 2D map, SXM channel, or 3DS cube with PySIDAM map-crop geometry")
+    p_crop_map = crop_sub.add_parser("map", help="Crop a 2D map, SXM channel, or 3DS cube with AnalySTM map-crop geometry")
     p_crop_map.add_argument("path")
     p_crop_map.add_argument("--data-key", default="")
     p_crop_map.add_argument("--kind", choices=("map", "sxm", "3ds"), default="map")

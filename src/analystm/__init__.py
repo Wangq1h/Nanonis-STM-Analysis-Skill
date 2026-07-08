@@ -63,6 +63,7 @@ __all__ = [
     "payload_data_limits",
     "real_phase_lockin",
     "q_cycles_to_pysidam_px_yx",
+    "run_lockin_phase",
     "run_qpi_fft",
     "run_fft_filter",
     "run_waterfall_fit",
@@ -197,7 +198,7 @@ def __getattr__(name: str):
     if name in {"apply_waterfall_baseline", "run_waterfall_fit"}:
         waterfall = import_module(".waterfall", __name__)
         return getattr(waterfall, name)
-    if name in {"q_cycles_to_pysidam_px_yx", "run_pysidam_lockin"}:
+    if name in {"q_cycles_to_pysidam_px_yx", "run_lockin_phase", "run_pysidam_lockin"}:
         phase_lockin = import_module(".phase_lockin", __name__)
         return getattr(phase_lockin, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

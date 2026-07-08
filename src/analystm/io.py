@@ -29,10 +29,10 @@ def build_read_parameters(divider: float = 1.0, divider_explicit: bool = False, 
 
 
 def load_signals(path: str | Path) -> tuple[dict[str, Any], str]:
-    """Load one spectrum-like file through PySIDAM core readers."""
+    """Load one Nanonis or imported data file through AnalySTM readers."""
     file_path = Path(path).expanduser()
     suffix = file_path.suffix.lower()
-    if suffix == ".dat":
+    if suffix in {".dat", ".3ds", ".sxm"}:
         from .nanonis_io import read_nanonis_file
 
         nf = read_nanonis_file(file_path)
