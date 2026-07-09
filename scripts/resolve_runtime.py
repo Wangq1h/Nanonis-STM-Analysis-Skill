@@ -62,8 +62,17 @@ def normalize_roots(value: Any) -> list[str]:
     return []
 
 
+def legacy_pysidam_enabled(runtime: dict[str, Any], host: dict[str, Any]) -> bool:
+    return bool(
+        runtime.get("legacy_pysidam_enabled")
+        or host.get("include_legacy_pysidam")
+        or host.get("legacy_pysidam_enabled")
+    )
+
+
 def resolve_pysidam_roots(runtime: dict[str, Any], host: dict[str, Any]) -> list[str]:
     roots: list[str] = []
+    roots.extend(normalize_roots(runtime.get("legacy_pysidam_root")))
     roots.extend(normalize_roots(runtime.get("pysidam_root")))
     roots.extend(normalize_roots(host.get("pysidam_root")))
     roots.extend(normalize_roots(host.get("pysidam_roots")))
@@ -81,10 +90,14 @@ def resolve_pysidam_roots(runtime: dict[str, Any], host: dict[str, Any]) -> list
     return out
 
 
-def build_probe_command(python: str, roots: list[str]) -> list[str]:
+def build_probe_command(python: str, roots: list[str], include_legacy: bool, include_ai: bool) -> list[str]:
     cmd = [python, str(SKILL_ROOT / "scripts" / "probe_runtime.py")]
-    for root in roots:
-        cmd.extend(["--pysidam-root", root])
+    if include_legacy:
+        cmd.append("--include-legacy-pysidam")
+        for root in roots:
+            cmd.extend(["--pysidam-root", root])
+    if include_ai:
+        cmd.append("--include-ai")
     return cmd
 
 
@@ -95,6 +108,7 @@ def shell_join(cmd: list[str]) -> str:
 def build_bootstrap_command(host: dict[str, Any], cache_dir: Path) -> list[str]:
     base_python = str(host.get("base_python") or sys.executable)
     groups = str(host.get("default_groups") or "headless")
+    include_legacy = bool(host.get("include_legacy_pysidam") or host.get("legacy_pysidam_enabled"))
     cmd = [
         base_python,
         str(SKILL_ROOT / "scripts" / "bootstrap_runtime.py"),
@@ -102,9 +116,12 @@ def build_bootstrap_command(host: dict[str, Any], cache_dir: Path) -> list[str]:
         groups,
         "--cache-dir",
         str(cache_dir),
+        "--pysidam-mode",
+        "auto" if include_legacy else "none",
     ]
-    for root in normalize_roots(host.get("pysidam_root")) + normalize_roots(host.get("pysidam_roots")):
-        cmd.extend(["--pysidam-root", root])
+    if include_legacy:
+        for root in normalize_roots(host.get("pysidam_root")) + normalize_roots(host.get("pysidam_roots")):
+            cmd.extend(["--pysidam-root", root])
     return cmd
 
 
@@ -113,7 +130,9 @@ def runtime_status(cache_dir: Path, host_config: Path) -> dict[str, Any]:
     runtime = read_json(runtime_path)
     host = read_json(host_config)
     python = first_existing_python(runtime)
-    pysidam_roots = resolve_pysidam_roots(runtime, host)
+    include_legacy = legacy_pysidam_enabled(runtime, host)
+    include_ai = bool(runtime.get("ai_integration") == "explicit_probe" or host.get("include_ai"))
+    pysidam_roots = resolve_pysidam_roots(runtime, host) if include_legacy else []
     bootstrap_cmd = build_bootstrap_command(host, cache_dir)
 
     status = {
@@ -126,8 +145,10 @@ def runtime_status(cache_dir: Path, host_config: Path) -> dict[str, Any]:
         "host_config_error": host.get("_error", ""),
         "python": python,
         "python_exists": bool(python),
+        "legacy_pysidam_enabled": include_legacy,
+        "ai_integration": "explicit_probe" if include_ai else "planned",
         "pysidam_roots": pysidam_roots,
-        "probe_command": build_probe_command(python, pysidam_roots) if python else [],
+        "probe_command": build_probe_command(python, pysidam_roots, include_legacy, include_ai) if python else [],
         "bootstrap_command": bootstrap_cmd,
     }
     status["ready"] = bool(status["python_exists"] and not status["runtime_json_error"])
@@ -140,8 +161,10 @@ def print_summary(status: dict[str, Any]) -> None:
     print(f"host.json: {status['host_config']}")
     if status["ready"]:
         print(f"python: {status['python']}")
-        if status["pysidam_roots"]:
-            print("pysidam_root: " + ", ".join(status["pysidam_roots"]))
+        print(f"ai integration: {status['ai_integration']}")
+        if status["legacy_pysidam_enabled"]:
+            roots = ", ".join(status["pysidam_roots"]) or "(none configured)"
+            print("legacy pysidam_root: " + roots)
         print("probe:")
         print("  " + shell_join(status["probe_command"]))
     else:

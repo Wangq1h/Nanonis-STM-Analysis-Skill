@@ -108,11 +108,15 @@ pixel size、coordinate frame 和 origin convention。
 python3 scripts/resolve_runtime.py --probe
 ```
 
+默认检查只覆盖 AnalySTM/headless 运行时：`analystm`、数值依赖、`nanonispy` 和 `igorwriter`。它不会把 PySIDAM、PyQt5 或 pyqtgraph 当成缺失依赖；AI 原子识别 detector 目前显示为 planned integration。
+
 如果没有可用缓存环境：
 
 ```bash
 python3 scripts/bootstrap_runtime.py --groups headless
 ```
+
+这个 headless 环境只安装 `core + nanonis + ibw`。只有显式测试未来 AI detector 接入时才使用 `--groups headless,ai`；只有显式做 PySIDAM regression 时才使用 `--pysidam-mode auto --pysidam-root /path/to/pysidam`。
 
 ## AnalySTM Backend
 
@@ -217,4 +221,4 @@ Release notes 位于 `docs/releases/`，当前 release line 跟随最新版本 r
 
 ## 与 PySIDAM 的关系
 
-`pysidam` 现在是开发参考和 legacy fallback，而不是公开运行时硬依赖。新报告应把执行引擎记录为 `analystm.*`；PySIDAM 函数名只应出现在 `pysidam_source_mapping` 等审计字段里。这个仓库保留 `pysidam_agent_core/` 和 `scripts/pysidam_agent/`，用于历史兼容、source mapping 和显式 regression 对比。
+`pysidam` 现在是开发参考和 legacy fallback，而不是公开运行时硬依赖。默认 probe 和 bootstrap 都不再检查、安装或克隆 PySIDAM，也不需要 PyQt5/pyqtgraph。新报告应把执行引擎记录为 `analystm.*`；PySIDAM 函数名只应出现在 `pysidam_source_mapping` 等审计字段里。这个仓库保留 `pysidam_agent_core/` 和 `scripts/pysidam_agent/`，用于历史兼容、source mapping 和显式 regression 对比。AI detector 是待接入项；当前公开能力是 `analystm atom` 的 scale guidance、lattice QC 和 wipe-region 工具。

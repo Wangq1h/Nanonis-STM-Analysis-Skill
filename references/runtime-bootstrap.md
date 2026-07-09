@@ -1,6 +1,6 @@
 # Runtime Bootstrap
 
-Use this reference before any data IO, fitting, QPI, SJTM, topography correction, or atom-detection task. The goal is to load proven readers and PySIDAM headless helpers before inventing a workflow.
+Use this reference before any data IO, fitting, QPI, SJTM, topography correction, or atom-site task. The default runtime is AnalySTM-first and headless: it must not require PySIDAM, Qt, pyqtgraph, or a private source checkout.
 
 ## Default Probe
 
@@ -10,7 +10,7 @@ From the skill repository, run:
 python3 scripts/resolve_runtime.py --probe
 ```
 
-This first checks the persistent cache, especially `runtime.json`, and runs `probe_runtime.py` through the cached virtual environment Python. It should be the default in every project directory.
+This first checks the persistent cache, especially `runtime.json`, and runs `probe_runtime.py` through the cached virtual environment Python. The default probe checks only the public AnalySTM backend plus headless numerical, Nanonis, and IBW-export dependencies. It reports AI atom detection as a planned integration and does not report missing PySIDAM or UI modules.
 
 If no cached runtime is ready, inspect the bootstrap command:
 
@@ -33,12 +33,12 @@ Example schema:
 ```json
 {
   "base_python": "/path/to/python3",
-  "pysidam_root": "/path/to/pysidam",
-  "default_groups": "headless"
+  "default_groups": "headless",
+  "include_legacy_pysidam": false
 }
 ```
 
-Agents should treat this file as local machine state. Do not commit it to the skill repository. `resolve_runtime.py` and `bootstrap_runtime.py` use it to avoid rediscovering PySIDAM or rebuilding the runtime for each working directory.
+Agents should treat this file as local machine state. Do not commit it to the skill repository. `resolve_runtime.py` and `bootstrap_runtime.py` use it to avoid rebuilding the runtime for each working directory. Legacy PySIDAM roots are ignored unless `include_legacy_pysidam` is explicitly true.
 
 ## Safe Bootstrap
 
@@ -58,16 +58,16 @@ Safety rules:
 - Use no sudo, no root, no global `pip`, no `brew`, and no conda base modification.
 - Use `--dry-run` before installing when the environment is unfamiliar.
 - Use `--no-network --wheelhouse /path/to/wheelhouse` for offline or locked-down installs.
-- Use `--pysidam-root /path/to/pysidam` to point at an existing source checkout.
-- Use `--pysidam-mode none` when the agent must not clone PySIDAM.
-- Prefer the host `pysidam_root` from `host.json` or `runtime.json`; do not rediscover or clone PySIDAM for every new project directory.
+- The default `--pysidam-mode none` must remain in place for normal AnalySTM work.
+- Use `--pysidam-mode auto --pysidam-root /path/to/pysidam` only for explicit legacy regression checks.
 
-The bootstrapper never mutates existing PySIDAM source checkouts. If PySIDAM is not importable and no source root is provided, auto mode may clone `https://github.com/Wangq1h/pysidam.git` into the skill cache and load it as source.
+The bootstrapper never mutates existing PySIDAM source checkouts. If legacy auto mode is explicitly requested and no source root is provided, it may clone `https://github.com/Wangq1h/pysidam.git` into the skill cache and load it as source. This path is outside the default runtime.
 
 ## Default Dependency Tiers
 
 Core analysis:
 
+- `analystm`
 - `numpy`
 - `scipy`
 - `skimage`
@@ -76,25 +76,17 @@ Core analysis:
 
 Native STM IO:
 
-- `pysidam`
 - `nanonispy`
 
 Igor/IBW:
 
-- PySIDAM reads `.ibw` through `pysidam.core.import_io` without requiring `igor2`.
 - `igorwriter` is needed for `.ibw` export.
-
-UI-wrapped PySIDAM modules:
-
-- `PyQt5.QtCore`
-- `pyqtgraph`
-
-These are optional for pure core IO, but many PySIDAM GUI modules import them at module import time. If either fails, avoid importing GUI-heavy modules directly and use `pysidam.core.*` first.
 
 AI atom detection:
 
-- `Atom_Identificator_core`
-- Install source described by PySIDAM as `git+https://github.com/Wangq1h/AI4STM.git@v0.1.0` when atom/site detection is requested.
+- AI detector import is a planned integration, not a default dependency.
+- `analystm atom recommend-scale`, `analystm atom lattice-qc`, and `analystm atom wipe-regions` are public headless helpers now.
+- External detector probing requires an explicit `--include-ai` runtime probe or `--groups ai` bootstrap.
 
 The dependency manifests are:
 
@@ -102,7 +94,6 @@ The dependency manifests are:
 - `runtime/requirements-nanonis.txt`
 - `runtime/requirements-ibw.txt`
 - `runtime/requirements-ai.txt`
-- `runtime/requirements-ui.txt`
 - `runtime/constraints.txt`
 
 Default bootstrap group:
@@ -111,28 +102,23 @@ Default bootstrap group:
 
 Optional groups:
 
-- `ai`: AI atom/site detection dependencies.
-- `ui`: Qt/pyqtgraph dependencies for GUI-wrapped modules.
-- `all`: headless plus `ai` and `ui`.
+- `ai`: planned external AI atom-detector dependencies; use only when explicitly testing that integration.
+- `all`: currently equivalent to `headless`.
 
-## Loading PySIDAM
+## Legacy PySIDAM Checks
 
-Order of attempts:
+PySIDAM is a development reference and legacy fallback, not a public runtime dependency. Only run the legacy probe for explicit regression comparison or source-mapping work:
 
-1. Try `import pysidam`.
-2. If it fails, check `--pysidam-root`, `PYSIDAM_ROOT`, and nearby source checkouts containing `pysidam/core/nanonis_io.py`.
-3. Add the source root, not the package subdirectory, to `PYTHONPATH` or `sys.path`.
-4. Import the needed headless modules:
-   - `pysidam.core.nanonis_io`
-   - `pysidam.core.dataset_utils`
-   - `pysidam.core.import_io`
-   - `pysidam.core.bias_utils`
-   - `pysidam.core.fft_windowing`
-   - `pysidam.core.superconducting_gap_models`
+```bash
+python3 scripts/probe_runtime.py --include-legacy-pysidam --pysidam-root /path/to/pysidam
+python3 scripts/bootstrap_runtime.py --groups headless --pysidam-mode auto --pysidam-root /path/to/pysidam
+```
+
+Do not install Qt or pyqtgraph for agent analysis. GUI-wrapped PySIDAM modules are outside the supported default runtime.
 
 ## Git Synchronization
 
-When a PySIDAM source checkout is used:
+When a legacy PySIDAM source checkout is used:
 
 1. Record `git remote -v`, current branch, current HEAD, and working-tree status.
 2. If network access is available, run `git fetch origin --prune`.
@@ -141,9 +127,10 @@ When a PySIDAM source checkout is used:
 
 ## Missing Dependency Policy
 
-- Missing `nanonispy` blocks raw `.3ds`, `.sxm`, and `.dat` reading through the normal PySIDAM/Nanonis path.
-- Missing `igorwriter` blocks `.ibw` export, not `.ibw` import through PySIDAM.
-- Missing or broken Qt blocks GUI-heavy module imports; it does not block pure core IO and normalization.
-- Missing `Atom_Identificator_core` blocks AI atom detection only.
+- Missing `analystm` blocks public backend execution.
+- Missing `nanonispy` blocks raw `.3ds`, `.sxm`, and `.dat` reading through the normal AnalySTM/Nanonis path.
+- Missing `igorwriter` blocks `.ibw` export.
+- Missing PySIDAM, PyQt5, or pyqtgraph does not reduce default AnalySTM capability.
+- Missing `Atom_Identificator_core` means the external AI detector is not connected yet; use scale guidance, lattice QC, and wipe-region helpers that already ship in AnalySTM.
 - Report the exact import error and the reduced capability instead of silently switching to an unverified parser.
 - If bootstrap fails because of a native wheel, platform library, code-signing, or network issue, preserve the probe output and continue only with capabilities that are actually importable.

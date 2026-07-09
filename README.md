@@ -205,7 +205,7 @@ The skill ships dependency manifests under `runtime/` and a safe bootstrapper:
 python3 scripts/bootstrap_runtime.py --groups headless
 ```
 
-The core manifest is `runtime/requirements-core.txt`; companion manifests cover Nanonis IO, IBW export, optional AI atom detection, and UI-wrapped helpers.
+The core manifest is `runtime/requirements-core.txt`; companion manifests cover Nanonis IO, IBW export, and the planned optional AI atom-detector integration. The default runtime does not require PySIDAM, PyQt5, or pyqtgraph.
 
 `headless` expands to:
 
@@ -215,12 +215,10 @@ core + nanonis + ibw
 
 This installs core numerical tools, `nanonispy`, and `igorwriter` into a per-skill virtual environment under a user-writable cache directory. It never uses `sudo`, never installs into system Python, never modifies conda base, and never runs `brew`.
 
-Optional groups are available when a task needs them:
+The AI group is available only when explicitly testing the future detector integration:
 
 ```bash
 python3 scripts/bootstrap_runtime.py --groups headless,ai
-python3 scripts/bootstrap_runtime.py --groups headless,ui
-python3 scripts/bootstrap_runtime.py --groups all
 ```
 
 For offline or controlled installs, provide a wheelhouse:
@@ -233,11 +231,11 @@ Useful safety flags:
 
 ```bash
 python3 scripts/bootstrap_runtime.py --dry-run
-python3 scripts/bootstrap_runtime.py --groups headless --pysidam-root /path/to/pysidam
 python3 scripts/bootstrap_runtime.py --groups headless --pysidam-mode none
+python3 scripts/bootstrap_runtime.py --groups headless --pysidam-mode auto --pysidam-root /path/to/pysidam
 ```
 
-The bootstrapper writes `runtime.json` inside the cache with the venv path, dependency groups, PySIDAM source path, and post-install probe results.
+The bootstrapper writes `runtime.json` inside the cache with the venv path, dependency groups, AI integration status, optional legacy PySIDAM source path, and post-install probe results.
 
 For repeated use across project directories, use the resolver:
 
@@ -248,19 +246,19 @@ python3 scripts/resolve_runtime.py --print-python
 python3 scripts/resolve_runtime.py --bootstrap-command
 ```
 
-The resolver calls `scripts/probe_runtime.py` through the cached runtime Python when a prepared runtime exists.
+The resolver calls `scripts/probe_runtime.py` through the cached runtime Python when a prepared runtime exists. By default that probe checks AnalySTM/headless dependencies only and reports AI atom detection as `planned`.
 
-Host-specific defaults, such as a local PySIDAM source checkout, belong in:
+Host-specific defaults belong in:
 
 ```text
 ~/.config/stm-sjtm-data-processing/host.json
 ```
 
-The skill repository should stay portable; do not commit host paths.
+The skill repository should stay portable; do not commit host paths. A local PySIDAM checkout is ignored unless `include_legacy_pysidam` is explicitly enabled for regression work.
 
 ## PySIDAM Agent Bridge
 
-The bridge scripts under `scripts/pysidam_agent/` are legacy compatibility adapters for explicit PySIDAM regression runs and historical workflows. They auto-reexec into the cached runtime from `runtime.json` when possible, add the host PySIDAM source root from `host.json` or `runtime.json`, and emit compact JSON or PNG outputs.
+The bridge scripts under `scripts/pysidam_agent/` are legacy compatibility adapters for explicit PySIDAM regression runs and historical workflows. They are outside the default runtime. When legacy mode is explicitly enabled, they can auto-reexec into the cached runtime from `runtime.json`, add the configured PySIDAM source root, and emit compact JSON or PNG outputs.
 
 ```bash
 python3 scripts/pysidam_agent/capabilities.py --domain core_io
@@ -354,9 +352,9 @@ AnalySTM is the replacement backend surface: reports should name `analystm.*` fu
 
 Raw Nanonis `.3ds`, `.sxm`, and `.dat` in AnalySTM use optional `nanonispy` reader utilities; missing `nanonispy` should be reported as a dependency gap, not worked around with an unverified binary parser. PXP is not claimed as supported by the current public backend.
 
-PySIDAM is not assumed to be a standard pip package. The bootstrapper can still use an explicit `--pysidam-root`, `PYSIDAM_ROOT`, or nearby source checkout for legacy bridge commands. It does not mutate existing user checkouts.
+PySIDAM is not assumed to be a standard pip package. The bootstrapper ignores PySIDAM by default; it uses an explicit `--pysidam-mode auto --pysidam-root ...` only for legacy bridge commands. It does not mutate existing user checkouts.
 
-The default PySIDAM dependency set is documented in `references/runtime-bootstrap.md`. The probe distinguishes "package can be found" from "module can actually be imported", which matters for Qt-wrapped modules.
+The default runtime dependency set is documented in `references/runtime-bootstrap.md`. The probe distinguishes default AnalySTM/headless capability from explicit legacy and planned AI checks.
 
 ## Validation
 

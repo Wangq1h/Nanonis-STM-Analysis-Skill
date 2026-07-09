@@ -11,19 +11,32 @@ import sys
 from typing import Any
 
 
-MODULES = [
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = SKILL_ROOT / "src"
+
+if SRC_ROOT.is_dir():
+    sys.path.insert(0, str(SRC_ROOT))
+
+DEFAULT_MODULES = [
+    ("analystm", "public_backend"),
     ("numpy", "core"),
     ("scipy", "core"),
     ("skimage", "core"),
     ("matplotlib", "core"),
     ("openpyxl", "core"),
-    ("pysidam", "pysidam"),
     ("nanonispy", "native_io"),
     ("igorwriter", "ibw_export"),
-    ("PyQt5.QtCore", "ui_wrapped"),
-    ("pyqtgraph", "ui_wrapped"),
+]
+
+LEGACY_PYSIDAM_MODULES = [
+    ("pysidam", "legacy_pysidam"),
+]
+
+AI_MODULES = [
     ("Atom_Identificator_core", "ai_atom_detection"),
 ]
+
+MODULES = DEFAULT_MODULES
 
 
 def import_status(module_name: str) -> dict[str, Any]:
@@ -137,56 +150,80 @@ def find_and_load_pysidam(explicit_roots: list[str]) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Probe STM/SJTM skill runtime dependencies.")
-    parser.add_argument("--pysidam-root", action="append", default=[], help="Path to a PySIDAM source checkout root.")
+    parser.add_argument(
+        "--include-legacy-pysidam",
+        action="store_true",
+        help="Also probe the explicit legacy PySIDAM bridge runtime.",
+    )
+    parser.add_argument(
+        "--include-ai",
+        action="store_true",
+        help="Also probe the not-yet-default external AI atom detector integration.",
+    )
+    parser.add_argument("--pysidam-root", action="append", default=[], help="Path to a legacy PySIDAM source checkout root.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     args = parser.parse_args()
 
-    pysidam_info = find_and_load_pysidam(args.pysidam_root)
+    include_legacy = bool(args.include_legacy_pysidam or args.pysidam_root)
+    pysidam_info: dict[str, Any] | None = find_and_load_pysidam(args.pysidam_root) if include_legacy else None
+
     module_results = []
-    for module_name, tier in MODULES:
+    modules = list(DEFAULT_MODULES)
+    if include_legacy:
+        modules.extend(LEGACY_PYSIDAM_MODULES)
+    if args.include_ai:
+        modules.extend(AI_MODULES)
+
+    for module_name, tier in modules:
         if module_name == "pysidam":
-            status = dict(pysidam_info["import"])
+            status = dict(pysidam_info["import"]) if pysidam_info else import_status("pysidam")
         else:
             status = import_status(module_name)
         status["tier"] = tier
         module_results.append(status)
 
+    def ok(module_name: str) -> bool:
+        return bool(next(item for item in module_results if item["module"] == module_name)["ok"])
+
     result = {
-        "pysidam": pysidam_info,
         "modules": module_results,
         "capabilities": {
-            "raw_nanonis_io": bool(next(item for item in module_results if item["module"] == "nanonispy")["ok"]),
-            "ibw_import_via_pysidam": bool(pysidam_info["loaded"]),
-            "ibw_export": bool(next(item for item in module_results if item["module"] == "igorwriter")["ok"]),
-            "ui_wrapped_modules": all(
-                item["ok"] for item in module_results if item["tier"] == "ui_wrapped"
-            ),
-            "ai_atom_detection": bool(next(item for item in module_results if item["module"] == "Atom_Identificator_core")["ok"]),
+            "analystm_public_backend": ok("analystm"),
+            "raw_nanonis_io": ok("nanonispy"),
+            "ibw_export": ok("igorwriter"),
+            "ai_atom_detection": "planned",
         },
     }
+    if include_legacy:
+        result["legacy_pysidam"] = pysidam_info
+        result["capabilities"]["legacy_pysidam_bridge"] = bool(pysidam_info and pysidam_info["loaded"])
+    if args.include_ai:
+        result["capabilities"]["ai_atom_detection"] = ok("Atom_Identificator_core")
 
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
 
-    print("STM/SJTM runtime probe")
-    print(f"pysidam loaded: {pysidam_info['loaded']} ({pysidam_info['method']})")
-    if pysidam_info.get("root"):
-        print(f"pysidam root: {pysidam_info['root']}")
-    if pysidam_info.get("git"):
-        git = pysidam_info["git"]
-        if git.get("head"):
-            print(f"pysidam git head: {git.get('head')}")
-        if git.get("origin_main"):
-            print(f"pysidam origin/main: {git.get('origin_main')}")
-        if git.get("status_short"):
-            print("pysidam status: dirty")
+    print("STM/SJTM AnalySTM runtime probe")
+    if include_legacy and pysidam_info is not None:
+        print(f"legacy pysidam loaded: {pysidam_info['loaded']} ({pysidam_info['method']})")
+        if pysidam_info.get("root"):
+            print(f"legacy pysidam root: {pysidam_info['root']}")
+        if pysidam_info.get("git"):
+            git = pysidam_info["git"]
+            if git.get("head"):
+                print(f"legacy pysidam git head: {git.get('head')}")
+            if git.get("origin_main"):
+                print(f"legacy pysidam origin/main: {git.get('origin_main')}")
+            if git.get("status_short"):
+                print("legacy pysidam status: dirty")
 
     for item in module_results:
         state = "OK" if item["ok"] else "MISSING"
         detail = item.get("version") or item.get("file") or item.get("error", "")
         print(f"{item['module']} [{item['tier']}]: {state} {detail}".rstrip())
 
+    print("AI atom detection: planned integration; not required by the default runtime")
     print("capabilities:")
     for key, value in result["capabilities"].items():
         print(f"  {key}: {value}")

@@ -23,7 +23,7 @@ nanonis = ["nanonispy"]
 ibw = ["igorwriter"]
 ai = ["AI4STM"]
 test = ["pytest>=8"]
-all = ["nanonispy", "igorwriter", "AI4STM", "pytest>=8"]
+all = ["nanonispy", "igorwriter", "pytest>=8"]
 
 [project.scripts]
 analystm = "analystm.cli.main:main"

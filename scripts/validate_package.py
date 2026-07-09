@@ -95,7 +95,6 @@ REQUIRED_FILES = [
     "runtime/requirements-nanonis.txt",
     "runtime/requirements-ibw.txt",
     "runtime/requirements-ai.txt",
-    "runtime/requirements-ui.txt",
     "references/workflow.md",
     "references/runtime-bootstrap.md",
     "references/format-io-matrix.md",
@@ -134,6 +133,7 @@ REQUIRED_FILES = [
     "tests/test_analystm_real_surfaces.py",
     "tests/test_analystm_sjtm.py",
     "tests/test_analystm_spstm.py",
+    "tests/test_runtime_defaults.py",
 ]
 
 REQUIRED_TOKENS = {
@@ -854,6 +854,7 @@ REQUIRED_TOKENS = {
         "safe_venv_path",
         "--dry-run",
         "--no-network",
+        "--pysidam-mode",
         "subprocess.check_call",
         "runtime.json",
     ],
@@ -962,7 +963,12 @@ REQUIRED_TOKENS = {
     "runtime/requirements-nanonis.txt": ["nanonispy"],
     "runtime/requirements-ibw.txt": ["igorwriter"],
     "runtime/requirements-ai.txt": ["AI4STM"],
-    "runtime/requirements-ui.txt": ["PyQt5", "pyqtgraph"],
+    "tests/test_runtime_defaults.py": [
+        "test_default_probe_modules_exclude_legacy_ui_and_ai_detector",
+        "test_default_probe_json_does_not_report_legacy_ui_or_ai_as_missing",
+        "test_bootstrap_headless_and_all_groups_do_not_include_ui_or_ai",
+        "test_resolver_bootstrap_command_ignores_pysidam_host_by_default",
+    ],
     "runtime/constraints.txt": ["# Constraints"],
 }
 

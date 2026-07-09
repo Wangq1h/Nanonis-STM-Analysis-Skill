@@ -22,11 +22,10 @@ GROUP_REQUIREMENTS = {
     "nanonis": RUNTIME_DIR / "requirements-nanonis.txt",
     "ibw": RUNTIME_DIR / "requirements-ibw.txt",
     "ai": RUNTIME_DIR / "requirements-ai.txt",
-    "ui": RUNTIME_DIR / "requirements-ui.txt",
 }
 GROUP_ALIASES = {
     "headless": DEFAULT_GROUPS,
-    "all": ("core", "nanonis", "ibw", "ai", "ui"),
+    "all": DEFAULT_GROUPS,
 }
 CONSTRAINTS_FILE = RUNTIME_DIR / "constraints.txt"
 DEFAULT_CACHE_DIR = Path(os.environ.get("STM_SJTM_SKILL_CACHE", "~/.cache/stm-sjtm-data-processing")).expanduser()
@@ -269,19 +268,20 @@ def ensure_pysidam_source(
     no_network: bool,
     dry_run: bool,
 ) -> Path | None:
+    if mode == "none":
+        return None
+
     existing = find_pysidam_source(explicit)
     if existing is not None:
         return existing
 
-    if mode == "none":
-        return None
     if no_network:
-        print("PySIDAM source not found; skipping clone because --no-network was set.")
+        print("Legacy PySIDAM source not found; skipping clone because --no-network was set.")
         return None
 
     target = assert_safe_path(cache_dir / "src" / "pysidam")
     if dry_run:
-        print(f"Would clone or update PySIDAM source at: {target}")
+        print(f"Would clone or update legacy PySIDAM source at: {target}")
         return target
 
     if not target.exists():
@@ -298,10 +298,12 @@ def ensure_pysidam_source(
     return target
 
 
-def run_probe(python: Path, pysidam_root: Path | None, dry_run: bool) -> dict[str, Any]:
+def run_probe(python: Path, pysidam_root: Path | None, include_ai: bool, dry_run: bool) -> dict[str, Any]:
     cmd = [str(python), str(SKILL_ROOT / "scripts" / "probe_runtime.py"), "--json"]
     if pysidam_root is not None:
-        cmd.extend(["--pysidam-root", str(pysidam_root)])
+        cmd.extend(["--include-legacy-pysidam", "--pysidam-root", str(pysidam_root)])
+    if include_ai:
+        cmd.append("--include-ai")
     print("+ " + " ".join(cmd))
     if dry_run:
         return {"dry_run": True, "command": cmd}
@@ -316,6 +318,7 @@ def write_runtime_json(
     groups: list[str],
     req_files: list[Path],
     pysidam_root: Path | None,
+    include_ai: bool,
     probe: dict[str, Any],
     dry_run: bool,
 ) -> Path:
@@ -329,6 +332,8 @@ def write_runtime_json(
         "requirements": [str(path.relative_to(SKILL_ROOT)) for path in req_files],
         "constraints": str(CONSTRAINTS_FILE.relative_to(SKILL_ROOT)),
         "pysidam_root": str(pysidam_root) if pysidam_root is not None else "",
+        "legacy_pysidam_root": str(pysidam_root) if pysidam_root is not None else "",
+        "ai_integration": "explicit_probe" if include_ai else "planned",
         "probe": probe,
     }
     path = cache_dir / RUNTIME_JSON
@@ -351,18 +356,18 @@ def main() -> int:
         description="Create an isolated STM/SJTM skill Python runtime.",
         parents=[pre_parser],
     )
-    parser.add_argument("--groups", default=str(host_config.get("default_groups") or ",".join(DEFAULT_GROUPS)), help="Comma-separated groups: core,nanonis,ibw,ai,ui,headless,all.")
+    parser.add_argument("--groups", default=str(host_config.get("default_groups") or ",".join(DEFAULT_GROUPS)), help="Comma-separated groups: core,nanonis,ibw,ai,headless,all.")
     parser.add_argument("--python", default=str(host_config.get("base_python") or sys.executable), help="Base Python used to create the venv.")
     parser.add_argument("--cache-dir", default=str(host_config.get("cache_dir") or DEFAULT_CACHE_DIR), help="User-writable cache directory.")
     parser.add_argument("--venv-path", default="", help="Explicit venv path. Must be user-writable and non-system.")
     parser.add_argument("--wheelhouse", default="", help="Optional local wheelhouse directory.")
-    parser.add_argument("--no-network", action="store_true", help="Install only from --wheelhouse and do not clone PySIDAM.")
+    parser.add_argument("--no-network", action="store_true", help="Install only from --wheelhouse and do not clone legacy PySIDAM.")
     parser.add_argument("--dry-run", action="store_true", help="Print the plan without changing files or installing packages.")
     parser.add_argument("--recreate", action="store_true", help="Remove and recreate the managed venv if it already exists.")
-    parser.add_argument("--pysidam-root", action="append", default=default_roots, help="Existing PySIDAM source checkout root.")
-    parser.add_argument("--pysidam-mode", choices=["auto", "none"], default="auto", help="Use an existing PySIDAM source or clone one into cache.")
-    parser.add_argument("--pysidam-git-url", default="https://github.com/Wangq1h/pysidam.git", help="PySIDAM git URL used by auto mode.")
-    parser.add_argument("--pysidam-ref", default="origin/main", help="PySIDAM ref checked out in the managed cache.")
+    parser.add_argument("--pysidam-root", action="append", default=default_roots, help="Existing legacy PySIDAM source checkout root. Used only with --pysidam-mode auto.")
+    parser.add_argument("--pysidam-mode", choices=["auto", "none"], default="none", help="Enable explicit legacy PySIDAM source probing/cloning.")
+    parser.add_argument("--pysidam-git-url", default="https://github.com/Wangq1h/pysidam.git", help="Legacy PySIDAM git URL used by auto mode.")
+    parser.add_argument("--pysidam-ref", default="origin/main", help="Legacy PySIDAM ref checked out in the managed cache.")
     args = parser.parse_args()
 
     assert_not_root()
@@ -388,8 +393,9 @@ def main() -> int:
         no_network=args.no_network,
         dry_run=args.dry_run,
     )
-    probe = run_probe(python, pysidam_root, dry_run=args.dry_run)
-    write_runtime_json(cache_dir, venv_path, python, groups, req_files, pysidam_root, probe, dry_run=args.dry_run)
+    include_ai = "ai" in groups
+    probe = run_probe(python, pysidam_root, include_ai=include_ai, dry_run=args.dry_run)
+    write_runtime_json(cache_dir, venv_path, python, groups, req_files, pysidam_root, include_ai, probe, dry_run=args.dry_run)
     return 0
 
 
