@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.0.1 - 2026-07-09
+
+- Made the default AnalySTM runtime independent of PySIDAM, PyQt5, and pyqtgraph.
+- Changed `probe_runtime.py` so default probes report only public/headless dependencies and mark external AI atom detection as a planned integration.
+- Changed `bootstrap_runtime.py` and `resolve_runtime.py` so PySIDAM source discovery is opt-in through explicit legacy mode.
+- Removed the UI dependency manifest from the current runtime and kept AI detector dependencies behind explicit `headless,ai` testing.
+- Added runtime-default regression tests and updated README/SKILL/runtime docs to prevent future install summaries from treating legacy PySIDAM or UI modules as required.
+
 ## v3.0 - 2026-07-07
 
 - Added the public AnalySTM backend package under `src/analystm`, with `import analystm` and the `analystm` CLI as the default agent runtime surface.

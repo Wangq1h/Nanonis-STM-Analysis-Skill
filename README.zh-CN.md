@@ -8,7 +8,7 @@
   <p>
     <a href="README.md"><img alt="Language: English" src="https://img.shields.io/badge/lang-English-2563eb"></a>
     <a href="README.zh-CN.md"><img alt="Language: Simplified Chinese" src="https://img.shields.io/badge/lang-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c2410c"></a>
-    <img alt="Release v3.0" src="https://img.shields.io/badge/release-v3.0-64748b">
+    <img alt="Release v3.0.1" src="https://img.shields.io/badge/release-v3.0.1-64748b">
     <img alt="STM STS SJTM" src="https://img.shields.io/badge/domain-STM%20%2F%20STS%20%2F%20SJTM-0f766e">
     <img alt="AnalySTM backend" src="https://img.shields.io/badge/backend-AnalySTM-7c3aed">
     <img alt="Evidence package" src="https://img.shields.io/badge/output-evidence%20package-0369a1">
