@@ -10,10 +10,13 @@ Confirm and record:
 - Bias unit and divider.
 - Scan size and pixel size when physical distances or q vectors are used.
 - Coordinate frame and origin convention.
+- For raw Nanonis SXM: `scan_dir`, acquisition direction, target frame, x/y flips, plot origin, and orientation validation status.
 - NaN and Inf handling.
 - Any transpose, flip, crop, drift correction, interpolation, or affine transform.
 
 Stop and request metadata when the bias unit, coordinate frame, or scan size is required but unknown.
+
+For report-facing SXM, use `analystm.prepare_sxm_map(..., frame="physical_xy")` and the returned `plot_origin`. Check the truth table explicitly: down scans flip vertically, up scans do not, and backward data additionally flips horizontally. Do not infer orientation from feature appearance alone. Mark header-only checks as `metadata_derived`; use `landmark_verified` or `user_verified` only when an asymmetric feature or acquisition screenshot confirms the result. Do not average forward/backward data until both arrays share the same verified target frame.
 
 ## Fitting Gates
 

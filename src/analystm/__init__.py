@@ -9,6 +9,7 @@ __all__ = [
     "LFDriftCorrector",
     "PROFILE_TWO_BAND_SPLUSMINUS_GAP_PRIORITY",
     "PeakFitResult",
+    "SXMMapView",
     "UniversalVortexFitterEngine",
     "__version__",
     "apply_wipe_regions",
@@ -60,6 +61,7 @@ __all__ = [
     "process_didv_contrast",
     "process_spectrum",
     "process_topography_display_map",
+    "prepare_sxm_map",
     "payload_data_limits",
     "real_phase_lockin",
     "q_cycles_to_pysidam_px_yx",
@@ -91,6 +93,9 @@ __all__ = [
 
 
 def __getattr__(name: str):
+    if name in {"SXMMapView", "prepare_sxm_map"}:
+        dataset_utils = import_module(".dataset_utils", __name__)
+        return getattr(dataset_utils, name)
     if name in {
         "ApprovalValidationError",
         "render_review_html",

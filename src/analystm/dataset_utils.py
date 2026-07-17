@@ -1,6 +1,21 @@
+from dataclasses import dataclass
+
 import numpy as np
 
 from .bias_utils import normalize_bias_with_divider
+
+
+@dataclass(frozen=True)
+class SXMMapView:
+    """An SXM map bound to an explicit coordinate and plotting contract."""
+
+    data_yx: np.ndarray
+    frame: str
+    plot_origin: str
+    scan_dir: str
+    direction: str
+    x_flip: bool
+    y_flip: bool
 
 
 def get_grid_shape_from_header(header):
@@ -675,8 +690,7 @@ def extract_sxm_scan_dir(header=None, default="down"):
     return str(default or "down").strip().lower()
 
 
-def normalize_sxm_direction_map(data_obj, direction="forward", header=None, scan_dir=None):
-    """Normalize SXM map for display, including scan direction and retrace mirroring."""
+def _coerce_sxm_map(data_obj):
     try:
         data = np.asarray(data_obj, dtype=float)
     except Exception:
@@ -694,17 +708,92 @@ def normalize_sxm_direction_map(data_obj, direction="forward", header=None, scan
             data = data[:, :, 0]
     if data.ndim != 2:
         return data
-
-    scan_dir_text = extract_sxm_scan_dir(header=header, default=scan_dir or "down")
-    if scan_dir_text == "up":
-        data = np.flipud(data)
-
-    if str(direction).lower() == "backward":
-        data = np.fliplr(data)
     return data
 
 
+def prepare_sxm_map(
+    data_obj,
+    direction="forward",
+    header=None,
+    scan_dir=None,
+    frame="physical_xy",
+):
+    """Prepare an SXM map with explicit frame, flip, and plot-origin metadata.
+
+    ``physical_xy`` returns a report-facing map for ``origin="lower"``:
+    down scans flip vertically, up scans do not. ``nanonis_display`` returns
+    scan-normalized display order for ``origin="upper"``. Backward data flips
+    horizontally in both frames to align retrace pixels with forward pixels.
+    """
+    data = _coerce_sxm_map(data_obj)
+    if data is None:
+        return None
+    if data.ndim != 2:
+        raise ValueError("SXM map must be 2D after coercion")
+
+    direction_text = str(direction or "forward").strip().lower()
+    if direction_text not in {"forward", "backward"}:
+        raise ValueError("direction must be 'forward' or 'backward'")
+
+    if scan_dir is not None:
+        scan_dir_text = str(scan_dir).strip().lower()
+    else:
+        scan_dir_text = extract_sxm_scan_dir(header=header, default="down")
+    if scan_dir_text not in {"down", "up"}:
+        raise ValueError("scan_dir must be 'down' or 'up'")
+
+    frame_text = str(frame or "physical_xy").strip().lower()
+    if frame_text not in {"physical_xy", "nanonis_display"}:
+        raise ValueError("frame must be 'physical_xy' or 'nanonis_display'")
+
+    y_flip = (
+        scan_dir_text == "down"
+        if frame_text == "physical_xy"
+        else scan_dir_text == "up"
+    )
+    x_flip = direction_text == "backward"
+
+    if y_flip:
+        data = np.flipud(data)
+    if x_flip:
+        data = np.fliplr(data)
+
+    return SXMMapView(
+        data_yx=data,
+        frame=frame_text,
+        plot_origin="lower" if frame_text == "physical_xy" else "upper",
+        scan_dir=scan_dir_text,
+        direction=direction_text,
+        x_flip=x_flip,
+        y_flip=y_flip,
+    )
+
+
+def normalize_sxm_direction_map(data_obj, direction="forward", header=None, scan_dir=None):
+    """Return legacy scan-normalized display order; pair it with origin='upper'."""
+    data = _coerce_sxm_map(data_obj)
+    if data is None or data.ndim != 2:
+        return data
+    scan_dir_text = extract_sxm_scan_dir(header=header, default=scan_dir or "down")
+    if scan_dir_text not in {"down", "up"}:
+        scan_dir_text = "down"
+    direction_text = (
+        "backward" if str(direction).strip().lower() == "backward" else "forward"
+    )
+    view = prepare_sxm_map(
+        data,
+        direction=direction_text,
+        header=None,
+        scan_dir=scan_dir_text,
+        frame="nanonis_display",
+    )
+    if view is None:
+        return None
+    return view.data_yx
+
+
 __all__ = [
+    "SXMMapView",
     "get_grid_shape_from_header",
     "extract_scan_size_nm",
     "normalize_3ds_cube",
@@ -720,5 +809,6 @@ __all__ = [
     "extract_3ds_topography_candidates",
     "prepare_3ds_dataset",
     "extract_sxm_scan_dir",
+    "prepare_sxm_map",
     "normalize_sxm_direction_map",
 ]

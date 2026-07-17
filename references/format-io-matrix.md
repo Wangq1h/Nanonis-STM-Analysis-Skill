@@ -7,7 +7,7 @@ Use this reference before opening STM/SJTM files. It records the current PySIDAM
 | Format | PySIDAM route | Dependency | Contract |
 | --- | --- | --- | --- |
 | `.3ds` | `pysidam.core.nanonis_io.read_nanonis_file` -> `prepare_3ds_dataset` | `nanonispy` | grid `signals`, `header`, optional `bias`; cubes become `(x, y, bias)` |
-| `.sxm` | `pysidam.core.nanonis_io.read_nanonis_file` -> `normalize_sxm_direction_map` | `nanonispy` | scan `signals` with 2D maps or forward/backward maps |
+| `.sxm` | raw reader -> `analystm.prepare_sxm_map` | `nanonispy` | scan `signals` with 2D maps or forward/backward maps; explicit frame and plot origin |
 | `.dat` | `pysidam.core.nanonis_io.read_nanonis_file` | `nanonispy` | spectroscopy `signals`; select bias-like axis and signal columns |
 | `.txt/.csv/.tsv` | `pysidam.core.import_io.read_imported_file` | core Python/NumPy | dtype `dat`, `signals["Bias calc (V)"]` plus signal columns |
 | `.ibw` | `pysidam.core.import_io.read_imported_file` | PySIDAM built-in parser | dtype depends on wave: `dat`, `sxm`, `ibw`, or spectral cube metadata |
@@ -35,26 +35,40 @@ If this raises `NanonisUnavailableError`, `nanonispy` is missing. Stop the raw N
 
 ## SXM Maps
 
-Normalize each map through:
+Prepare each map through the structured AnalySTM API. The report-facing default is physical x-right/y-up coordinates:
 
 ```python
-from pysidam.core.dataset_utils import extract_scan_size_nm, normalize_sxm_direction_map
+import matplotlib.pyplot as plt
+from analystm import prepare_sxm_map
+from analystm.dataset_utils import extract_scan_size_nm
 
 header = getattr(scan, "header", {})
 signals = getattr(scan, "signals", {})
 raw = signals[channel]
 
 if isinstance(raw, dict) and "forward" in raw:
-    map_yx = normalize_sxm_direction_map(raw["forward"], direction="forward", header=header)
+    view = prepare_sxm_map(raw["forward"], direction="forward", header=header, frame="physical_xy")
 elif isinstance(raw, dict) and "backward" in raw:
-    map_yx = normalize_sxm_direction_map(raw["backward"], direction="backward", header=header)
+    view = prepare_sxm_map(raw["backward"], direction="backward", header=header, frame="physical_xy")
 else:
-    map_yx = normalize_sxm_direction_map(raw, direction="forward", header=header)
+    view = prepare_sxm_map(raw, direction="forward", header=header, frame="physical_xy")
 
 scan_size_nm = extract_scan_size_nm(header, default=100.0)
+plt.imshow(view.data_yx, origin=view.plot_origin)
 ```
 
-Record direction, scan direction, flips, scan size, and selected channel.
+For raw nanonispy array order, the orientation truth table is:
+
+| Target frame | `scan_dir` | Y transform | Backward additional transform | Required plot origin |
+| --- | --- | --- | --- | --- |
+| `physical_xy` | `down` | `flipud` | `fliplr` | `lower` |
+| `physical_xy` | `up` | none | `fliplr` | `lower` |
+| `nanonis_display` | `down` | none | `fliplr` | `upper` |
+| `nanonis_display` | `up` | `flipud` | `fliplr` | `upper` |
+
+Use `physical_xy` for report-facing maps and coordinate-dependent analysis. Use `nanonis_display` only when reproducing the Nanonis screen convention. `normalize_sxm_direction_map()` remains a compatibility helper that returns this legacy Nanonis-display array order and must be plotted with `origin="upper"`.
+
+Record selected channel, scan size, `scan_dir`, acquisition direction, target frame, x/y flips, plot origin, and orientation validation. Do not average forward/backward maps until both have been transformed into the same verified frame.
 
 ## DAT And 1D Spectroscopy
 

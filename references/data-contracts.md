@@ -28,9 +28,16 @@ Record:
 
 - Pixel origin.
 - Whether image display uses `origin="lower"` or another convention.
+- For raw Nanonis SXM, the header `scan_dir`, acquisition direction, target frame, x/y flips, plot origin, and orientation validation status.
 - Scan size and pixel size.
 - Any crop, transpose, flip, drift correction, affine transform, or interpolation.
 - Whether topography, spectroscopy, and derived maps share the same frame.
+
+### Raw Nanonis SXM Orientation
+
+Use `analystm.prepare_sxm_map()` so the transformed array cannot be separated from its plotting convention. For report-facing `physical_xy` with `origin="lower"`, `scan_dir="down"` requires `flipud`, while `scan_dir="up"` requires no y flip. Backward data additionally requires `fliplr`. The legacy `normalize_sxm_direction_map()` contract is `nanonis_display` order for `origin="upper"`, not physical-y-up order.
+
+Treat a first-pass orientation derived only from the header as `metadata_derived`. Promote it to `landmark_verified` or `user_verified` only after comparison with a known asymmetric landmark or the acquisition display. Do not average forward/backward maps until they share the same target frame and verified orientation.
 
 ## Units
 
@@ -64,6 +71,13 @@ data_contract:
   bias_unit
   bias_axis_source
   coordinate_frame
+  scan_dir
+  acquisition_direction
+  target_frame
+  x_flip
+  y_flip
+  plot_origin
+  orientation_validation
   scan_size
   pixel_size
   transforms

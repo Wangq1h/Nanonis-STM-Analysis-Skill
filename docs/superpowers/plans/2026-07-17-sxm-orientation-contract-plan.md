@@ -73,4 +73,3 @@
 - [ ] Synchronize the installed skill through `scripts/sync_installed_skill.py` and probe it.
 - [ ] Review the exact diff and stage only intended files.
 - [ ] Commit the fix, fast-forward local `main`, and push `origin/main`.
-

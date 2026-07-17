@@ -134,6 +134,7 @@ REQUIRED_FILES = [
     "tests/test_analystm_real_surfaces.py",
     "tests/test_analystm_sjtm.py",
     "tests/test_analystm_spstm.py",
+    "tests/test_io_contracts.py",
     "tests/test_runtime_defaults.py",
 ]
 
@@ -257,6 +258,9 @@ REQUIRED_TOKENS = {
         "lattice-qc",
         "wipe-regions",
         "domain_wall.py",
+        "prepare_sxm_map",
+        "scan_dir=\"down\"",
+        "orientation_validation",
     ],
     "references/runtime-bootstrap.md": [
         "nanonispy",
@@ -286,6 +290,9 @@ REQUIRED_TOKENS = {
         ".npz",
         "PXP is not",
         "normalize_sxm_direction_map",
+        "prepare_sxm_map",
+        "physical_xy",
+        "plot_origin",
         "imported_file_to_numeric_table",
         "analystm export",
     ],
@@ -309,6 +316,9 @@ REQUIRED_TOKENS = {
         "(x, y, bias)",
         "bias unit",
         "coordinate frame",
+        "scan_dir",
+        "target_frame",
+        "orientation_validation",
     ],
     "references/fitting-recipes.md": [
         "Superconducting Gap Fitting",
@@ -464,6 +474,9 @@ REQUIRED_TOKENS = {
         "fit_window",
         "q_selection",
         "peak_count",
+        "prepare_sxm_map",
+        "metadata_derived",
+        "orientation validation",
     ],
     "references/reporting.md": [
         "report.json",

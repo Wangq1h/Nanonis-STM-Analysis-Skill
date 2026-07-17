@@ -34,4 +34,3 @@ Require every report-facing SXM workflow to declare its target frame. Route new 
 - Compatibility tests prove the legacy helper output is unchanged.
 - The full repository test suite and package validation pass.
 - The installed skill is synchronized from the source checkout and revalidated.
-
